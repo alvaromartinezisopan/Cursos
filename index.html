@@ -43,7 +43,6 @@
 
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilo para el delineado NUEVO */
         .new-highlight { border: 2px solid var(--isopan-blue); background: #ffffff; }
         .new-badge {
             position: absolute; top: -10px; right: 20px;
@@ -77,30 +76,21 @@
     </div>
 
     <script>
-        const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv&cachebust=${Date.now()}`;
+        const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv&cb=${Date.now()}`;
+        
+        // --- ESTA ES LA VARIABLE QUE "RECUERDA" EL ESTADO ANTERIOR ---
+        let lastDataSnapshot = ""; 
 
-        // Función que determina si un curso ya terminó definitivamente
-        function cursoYaTermino(fechaStr, horaStr) {
-            if (!fechaStr) return false;
+        function cursoYaTermino(fechaStr) {
+            if (!fechaStr || !fechaStr.includes('/')) return false;
             try {
                 const ahora = new Date();
-                const partesFecha = fechaStr.trim().split('/');
-                const dia = parseInt(partesFecha[0]);
-                const mes = parseInt(partesFecha[1]) - 1;
-                const anio = partesFecha[2] ? parseInt(partesFecha[2]) : ahora.getFullYear();
-
-                // Extraemos la hora de fin (ej: de "08:00-14:00" saca "14:00")
-                let horaFinal = "23:59";
-                if (horaStr && horaStr.includes('-')) {
-                    horaFinal = horaStr.split('-')[1].trim();
-                } else if (horaStr) {
-                    horaFinal = horaStr.trim();
-                }
-
-                const [h, m] = horaFinal.split(':');
-                const fechaFinCurso = new Date(anio, mes, dia, parseInt(h) || 23, parseInt(m) || 59);
-                
-                return ahora > fechaFinCurso;
+                const partes = fechaStr.trim().split('/');
+                const dia = parseInt(partes[0]);
+                const mes = parseInt(partes[1]) - 1;
+                const anio = partes[2] ? parseInt(partes[2]) : ahora.getFullYear();
+                const finDelDia = new Date(anio, mes, dia, 23, 59, 59);
+                return ahora > finDelDia;
             } catch (e) { return false; }
         }
 
@@ -124,43 +114,54 @@
         async function loadCursos() {
             const status = document.getElementById('status-msg');
             try {
-                const response = await fetch(url);
+                // Hacemos el fetch con un timestamp nuevo para saltar cache
+                const response = await fetch(`${url}&t=${Date.now()}`);
                 const csvRaw = await response.text();
-                const data = parseCSV(csvRaw).slice(1);
+
+                // SI EL CONTENIDO ES IGUAL AL ANTERIOR, NO HACEMOS NADA
+                if (csvRaw === lastDataSnapshot) {
+                    console.log("Sin cambios detectados. No se reinicia la animación.");
+                    return; 
+                }
+
+                // Si llegamos aquí es que hay cambios o es la primera carga
+                lastDataSnapshot = csvRaw; 
+                const data = parseCSV(csvRaw);
                 
+                let cursos = data;
+                if (data.length > 0 && data[0][0].toLowerCase().includes('cat')) {
+                    cursos = data.slice(1);
+                }
+
                 const container = document.getElementById('course-grid');
                 let htmlContent = '';
                 let contadorVisibles = 0;
 
-                data.forEach((columns, index) => {
+                cursos.forEach((columns, index) => {
                     if (columns.length >= 2 && columns[1]?.trim()) {
-                        const fechasRaw = columns[2] || '';
-                        const fechasArr = fechasRaw.split(',').map(f => f.trim()).filter(f => f !== "");
+                        const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
                         const horasArr = (columns[3] || '').split(',').map(h => h.trim());
 
-                        // REGLA: Solo ocultar si la ÚLTIMA sesión del curso ya pasó
                         const ultimaFecha = fechasArr[fechasArr.length - 1];
-                        const ultimaHora = horasArr[horasArr.length - 1];
-                        if (cursoYaTermino(ultimaFecha, ultimaHora)) return;
+                        if (ultimaFecha && cursoYaTermino(ultimaFecha)) return;
 
                         contadorVisibles++;
-                        const titulo = columns[1].trim();
                         const categoria = columns[0].trim() || 'General';
+                        const titulo = columns[1].trim();
                         const lugar = columns[4] || 'Por definir';
                         const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
-
-                        // El último curso añadido al Excel (abajo del todo) sale con el badge "Nuevo"
-                        const esNuevo = (index === data.length - 1); 
+                        
+                        const esNuevo = (index === cursos.length - 1);
 
                         let sessionsHtml = '';
                         fechasArr.forEach((f, i) => {
-                            const partes = f.split('/');
+                            const p = f.split('/');
                             const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
                             sessionsHtml += `
                                 <div class="session-item">
                                     <div class="calendar-icon">
-                                        <span class="cal-month">${meses[parseInt(partes[1])-1] || 'DÍA'}</span>
-                                        <span class="cal-day">${partes[0]}</span>
+                                        <span class="cal-month">${meses[parseInt(p[1])-1] || 'DÍA'}</span>
+                                        <span class="cal-day">${p[0]}</span>
                                     </div>
                                     <div class="time-info"><div class="value">${horasArr[i] || '--:--'}</div></div>
                                 </div>`;
@@ -185,16 +186,17 @@
                 });
 
                 status.style.display = contadorVisibles > 0 ? "none" : "block";
-                if (contadorVisibles === 0) status.innerText = "";
+                status.innerText = contadorVisibles === 0 ? " " : "";
                 container.innerHTML = htmlContent;
 
             } catch (e) {
-                status.innerText = "Error de conexión con el Excel.";
+                console.error("Error cargando datos:", e);
             }
         }
 
         loadCursos();
-        setInterval(loadCursos, 60000);
+        // Comprueba cambios cada 30 segundos, pero solo animará si hay cambios reales
+        setInterval(loadCursos, 30000); 
     </script>
 </body>
 </html>
