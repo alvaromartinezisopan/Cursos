@@ -78,8 +78,8 @@
     <script>
         const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv&cb=${Date.now()}`;
         
-        // --- ESTA ES LA VARIABLE QUE "RECUERDA" EL ESTADO ANTERIOR ---
-        let lastDataSnapshot = ""; 
+        // Guardamos el JSON de los cursos mostrados para comparar
+        let currentSnapshot = ""; 
 
         function cursoYaTermino(fechaStr) {
             if (!fechaStr || !fechaStr.includes('/')) return false;
@@ -114,75 +114,79 @@
         async function loadCursos() {
             const status = document.getElementById('status-msg');
             try {
-                // Hacemos el fetch con un timestamp nuevo para saltar cache
                 const response = await fetch(`${url}&t=${Date.now()}`);
                 const csvRaw = await response.text();
+                const data = parseCSV(csvRaw);
+                
+                let cursosExcel = data;
+                if (data.length > 0 && data[0][0].toLowerCase().includes('cat')) {
+                    cursosExcel = data.slice(1);
+                }
 
-                // SI EL CONTENIDO ES IGUAL AL ANTERIOR, NO HACEMOS NADA
-                if (csvRaw === lastDataSnapshot) {
-                    console.log("Sin cambios detectados. No se reinicia la animación.");
+                // --- PROCESADO PREVIO PARA COMPARAR ---
+                // Creamos una lista de lo que REALMENTE se va a ver en pantalla
+                const cursosFiltrados = cursosExcel.filter(columns => {
+                    if (columns.length < 2 || !columns[1]?.trim()) return false;
+                    const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
+                    const ultimaFecha = fechasArr[fechasArr.length - 1];
+                    return !(ultimaFecha && cursoYaTermino(ultimaFecha));
+                });
+
+                // Convertimos esa lista a un texto único (Snapshot)
+                const newSnapshot = JSON.stringify(cursosFiltrados);
+
+                // SI EL SNAPSHOT ES IGUAL AL ANTERIOR, NO ACTUALIZAMOS NADA
+                if (newSnapshot === currentSnapshot) {
                     return; 
                 }
 
-                // Si llegamos aquí es que hay cambios o es la primera carga
-                lastDataSnapshot = csvRaw; 
-                const data = parseCSV(csvRaw);
-                
-                let cursos = data;
-                if (data.length > 0 && data[0][0].toLowerCase().includes('cat')) {
-                    cursos = data.slice(1);
-                }
-
+                // Si hay cambios, actualizamos el snapshot y el HTML
+                currentSnapshot = newSnapshot;
                 const container = document.getElementById('course-grid');
                 let htmlContent = '';
                 let contadorVisibles = 0;
 
-                cursos.forEach((columns, index) => {
-                    if (columns.length >= 2 && columns[1]?.trim()) {
-                        const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-                        const horasArr = (columns[3] || '').split(',').map(h => h.trim());
+                cursosFiltrados.forEach((columns, index) => {
+                    contadorVisibles++;
+                    const categoria = columns[0].trim() || 'General';
+                    const titulo = columns[1].trim();
+                    const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
+                    const horasArr = (columns[3] || '').split(',').map(h => h.trim());
+                    const lugar = columns[4] || 'Por definir';
+                    const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
+                    
+                    // El badge NUEVO sale solo si es el último de la lista real del Excel
+                    const esNuevo = (index === cursosFiltrados.length - 1);
 
-                        const ultimaFecha = fechasArr[fechasArr.length - 1];
-                        if (ultimaFecha && cursoYaTermino(ultimaFecha)) return;
-
-                        contadorVisibles++;
-                        const categoria = columns[0].trim() || 'General';
-                        const titulo = columns[1].trim();
-                        const lugar = columns[4] || 'Por definir';
-                        const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
-                        
-                        const esNuevo = (index === cursos.length - 1);
-
-                        let sessionsHtml = '';
-                        fechasArr.forEach((f, i) => {
-                            const p = f.split('/');
-                            const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-                            sessionsHtml += `
-                                <div class="session-item">
-                                    <div class="calendar-icon">
-                                        <span class="cal-month">${meses[parseInt(p[1])-1] || 'DÍA'}</span>
-                                        <span class="cal-day">${p[0]}</span>
-                                    </div>
-                                    <div class="time-info"><div class="value">${horasArr[i] || '--:--'}</div></div>
-                                </div>`;
-                        });
-
-                        htmlContent += `
-                            <div class="course-card ${esNuevo ? 'new-highlight' : ''}" style="animation-delay: ${contadorVisibles * 0.1}s">
-                                ${esNuevo ? '<div class="new-badge">Nuevo</div>' : ''}
-                                <div class="card-left">
-                                    <span class="category-label">${categoria}</span>
-                                    <h2 class="course-title">${titulo}</h2>
-                                    <div class="sessions-wrapper">${sessionsHtml}</div>
+                    let sessionsHtml = '';
+                    fechasArr.forEach((f, i) => {
+                        const p = f.split('/');
+                        const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+                        sessionsHtml += `
+                            <div class="session-item">
+                                <div class="calendar-icon">
+                                    <span class="cal-month">${meses[parseInt(p[1])-1] || 'DÍA'}</span>
+                                    <span class="cal-day">${p[0]}</span>
                                 </div>
-                                <div class="card-right">
-                                    <div class="right-label">UBICACIÓN</div>
-                                    <div class="location-box">${lugar}</div>
-                                    <div class="right-label">CONVOCADOS</div>
-                                    <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
-                                </div>
+                                <div class="time-info"><div class="value">${horasArr[i] || '--:--'}</div></div>
                             </div>`;
-                    }
+                    });
+
+                    htmlContent += `
+                        <div class="course-card ${esNuevo ? 'new-highlight' : ''}" style="animation-delay: ${contadorVisibles * 0.1}s">
+                            ${esNuevo ? '<div class="new-badge">Nuevo</div>' : ''}
+                            <div class="card-left">
+                                <span class="category-label">${categoria}</span>
+                                <h2 class="course-title">${titulo}</h2>
+                                <div class="sessions-wrapper">${sessionsHtml}</div>
+                            </div>
+                            <div class="card-right">
+                                <div class="right-label">UBICACIÓN</div>
+                                <div class="location-box">${lugar}</div>
+                                <div class="right-label">CONVOCADOS</div>
+                                <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
+                            </div>
+                        </div>`;
                 });
 
                 status.style.display = contadorVisibles > 0 ? "none" : "block";
@@ -190,12 +194,11 @@
                 container.innerHTML = htmlContent;
 
             } catch (e) {
-                console.error("Error cargando datos:", e);
+                console.error(e);
             }
         }
 
         loadCursos();
-        // Comprueba cambios cada 30 segundos, pero solo animará si hay cambios reales
         setInterval(loadCursos, 30000); 
     </script>
 </body>
