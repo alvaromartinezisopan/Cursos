@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isopan Academy - Dashboard</title>
+    <style>
+        :root {
+            --isopan-gray-bg: #ffffff;
+            --isopan-gray-card: #f8f8f8;
+            --text-main: #1d1d1f;
+            --text-secondary: #48484a;
+            --apple-red: #ff3b30;
+            --isopan-blue: #0084ad;
+        }
+
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background-color: var(--isopan-gray-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            overflow: hidden;
+        }
+
+        .main-wrapper {
+            display: flex; flex-direction: column; justify-content: flex-end;
+            height: 100vh; padding: 15px; box-sizing: border-box;
+        }
+
+        .grid-container { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+        #status-msg {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #86868b; font-size: 14px; text-align: center;
+        }
+
+        .course-card {
+            background: var(--isopan-gray-card); border-radius: 16px;
+            padding: 18px; display: flex; gap: 20px; position: relative;
+            opacity: 0; transform: translateY(20px);
+            animation: slideUp 0.5s ease forwards; border: 1px solid #eeeeef;
+        }
+
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* Estilo para el delineado NUEVO */
+        .new-highlight { border: 2px solid var(--isopan-blue); background: #ffffff; }
+        .new-badge {
+            position: absolute; top: -10px; right: 20px;
+            background: var(--isopan-blue); color: white;
+            font-size: 9px; font-weight: 800; padding: 4px 10px;
+            border-radius: 20px; text-transform: uppercase;
+            box-shadow: 0 4px 8px rgba(0, 132, 173, 0.2);
+        }
+
+        .card-left { flex: 1.2; border-right: 1px solid #e5e5e7; padding-right: 15px; }
+        .card-right { flex: 0.8; display: flex; flex-direction: column; }
+        .category-label { font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; margin-bottom: 4px; }
+        .course-title { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 12px 0; color: var(--text-main); }
+        .sessions-wrapper { display: flex; flex-wrap: wrap; gap: 8px; }
+        .session-item { display: flex; align-items: center; background: #ffffff; padding: 6px 10px; border-radius: 10px; gap: 10px; border: 1px solid #e5e5e7; }
+        .calendar-icon { display: flex; flex-direction: column; align-items: center; min-width: 32px; }
+        .cal-month { font-size: 8px; font-weight: 800; color: var(--apple-red); text-transform: uppercase; }
+        .cal-day { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .time-info .value { font-size: 13px; font-weight: 600; }
+        .right-label { font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase; margin-bottom: 6px; }
+        .location-box { margin-bottom: 15px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        .attendee-tag { background: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-secondary); border: 1px solid #e5e5e7; margin-right: 4px; margin-bottom: 4px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div id="status-msg">Cargando cursos...</div>
+
+    <div class="main-wrapper">
+        <div class="grid-container" id="course-grid"></div>
+    </div>
+
+    <script>
+        const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv&cachebust=${Date.now()}`;
+
+        // Función que determina si un curso ya terminó definitivamente
+        function cursoYaTermino(fechaStr, horaStr) {
+            if (!fechaStr) return false;
+            try {
+                const ahora = new Date();
+                const partesFecha = fechaStr.trim().split('/');
+                const dia = parseInt(partesFecha[0]);
+                const mes = parseInt(partesFecha[1]) - 1;
+                const anio = partesFecha[2] ? parseInt(partesFecha[2]) : ahora.getFullYear();
+
+                // Extraemos la hora de fin (ej: de "08:00-14:00" saca "14:00")
+                let horaFinal = "23:59";
+                if (horaStr && horaStr.includes('-')) {
+                    horaFinal = horaStr.split('-')[1].trim();
+                } else if (horaStr) {
+                    horaFinal = horaStr.trim();
+                }
+
+                const [h, m] = horaFinal.split(':');
+                const fechaFinCurso = new Date(anio, mes, dia, parseInt(h) || 23, parseInt(m) || 59);
+                
+                return ahora > fechaFinCurso;
+            } catch (e) { return false; }
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            let row = [];
+            let col = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === ',' && !inQuotes) { row.push(col); col = ''; }
+                else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (col || row.length > 0) { row.push(col); rows.push(row); row = []; col = ''; }
+                } else col += char;
+            }
+            if (col || row.length > 0) { row.push(col); rows.push(row); }
+            return rows;
+        }
+
+        async function loadCursos() {
+            const status = document.getElementById('status-msg');
+            try {
+                const response = await fetch(url);
+                const csvRaw = await response.text();
+                const data = parseCSV(csvRaw).slice(1);
+                
+                const container = document.getElementById('course-grid');
+                let htmlContent = '';
+                let contadorVisibles = 0;
+
+                data.forEach((columns, index) => {
+                    if (columns.length >= 2 && columns[1]?.trim()) {
+                        const fechasRaw = columns[2] || '';
+                        const fechasArr = fechasRaw.split(',').map(f => f.trim()).filter(f => f !== "");
+                        const horasArr = (columns[3] || '').split(',').map(h => h.trim());
+
+                        // REGLA: Solo ocultar si la ÚLTIMA sesión del curso ya pasó
+                        const ultimaFecha = fechasArr[fechasArr.length - 1];
+                        const ultimaHora = horasArr[horasArr.length - 1];
+                        if (cursoYaTermino(ultimaFecha, ultimaHora)) return;
+
+                        contadorVisibles++;
+                        const titulo = columns[1].trim();
+                        const categoria = columns[0].trim() || 'General';
+                        const lugar = columns[4] || 'Por definir';
+                        const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
+
+                        // El último curso añadido al Excel (abajo del todo) sale con el badge "Nuevo"
+                        const esNuevo = (index === data.length - 1); 
+
+                        let sessionsHtml = '';
+                        fechasArr.forEach((f, i) => {
+                            const partes = f.split('/');
+                            const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+                            sessionsHtml += `
+                                <div class="session-item">
+                                    <div class="calendar-icon">
+                                        <span class="cal-month">${meses[parseInt(partes[1])-1] || 'DÍA'}</span>
+                                        <span class="cal-day">${partes[0]}</span>
+                                    </div>
+                                    <div class="time-info"><div class="value">${horasArr[i] || '--:--'}</div></div>
+                                </div>`;
+                        });
+
+                        htmlContent += `
+                            <div class="course-card ${esNuevo ? 'new-highlight' : ''}" style="animation-delay: ${contadorVisibles * 0.1}s">
+                                ${esNuevo ? '<div class="new-badge">Nuevo</div>' : ''}
+                                <div class="card-left">
+                                    <span class="category-label">${categoria}</span>
+                                    <h2 class="course-title">${titulo}</h2>
+                                    <div class="sessions-wrapper">${sessionsHtml}</div>
+                                </div>
+                                <div class="card-right">
+                                    <div class="right-label">UBICACIÓN</div>
+                                    <div class="location-box">${lugar}</div>
+                                    <div class="right-label">CONVOCADOS</div>
+                                    <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
+                                </div>
+                            </div>`;
+                    }
+                });
+
+                status.style.display = contadorVisibles > 0 ? "none" : "block";
+                if (contadorVisibles === 0) status.innerText = "No hay cursos pendientes.";
+                container.innerHTML = htmlContent;
+
+            } catch (e) {
+                status.innerText = "Error de conexión con el Excel.";
+            }
+        }
+
+        loadCursos();
+        setInterval(loadCursos, 60000);
+    </script>
+</body>
+</html>
