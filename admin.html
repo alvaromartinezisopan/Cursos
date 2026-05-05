@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isopan Academy - Gestión</title>
+    <style>
+        :root {
+            --isopan-blue: #0084ad;
+            --bg-gray: #f5f5f7;
+            --text-dark: #1d1d1f;
+            --danger: #ff3b30;
+            --warning: #ffcc00;
+            --border: #d2d2d7;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            background-color: var(--bg-gray);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container { width: 100%; max-width: 900px; }
+
+        .card {
+            background: white; padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px;
+        }
+
+        h2 { margin: 0 0 20px 0; font-size: 22px; border-bottom: 2px solid var(--bg-gray); padding-bottom: 15px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .full { grid-column: span 2; }
+
+        label { display: block; font-size: 11px; font-weight: 700; color: #86868b; text-transform: uppercase; margin-bottom: 5px; }
+        input, textarea {
+            width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;
+            font-size: 15px; box-sizing: border-box; outline: none; background: #fff;
+        }
+        input:focus { border-color: var(--isopan-blue); }
+
+        .btn {
+            padding: 14px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; font-size: 15px;
+        }
+        .btn-primary { background: var(--isopan-blue); color: white; width: 100%; margin-top: 10px; }
+        .btn-cancel { background: #e5e5e7; color: #1d1d1f; width: 100%; margin-top: 8px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 12px; color: #86868b; padding: 12px; border-bottom: 2px solid var(--bg-gray); }
+        td { padding: 15px 12px; border-bottom: 1px solid var(--bg-gray); font-size: 14px; }
+        
+        .badge-cat { background: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-sm { padding: 8px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; font-weight: 600; }
+        .edit { background: var(--warning); color: black; }
+        .delete { background: var(--danger); color: white; }
+
+        #status-msg { margin-top: 15px; text-align: center; font-weight: 600; padding: 10px; border-radius: 10px; display: none; }
+        .loading-overlay { text-align: center; padding: 40px; color: #86868b; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2 id="form-title">Nueva Formación</h2>
+        <form id="courseForm">
+            <input type="hidden" id="rowId"> 
+            <div class="form-grid">
+                <div>
+                    <label>Categoría</label>
+                    <input type="text" id="categoria" placeholder="Ej: Seguridad, Calidad..." required>
+                </div>
+                <div>
+                    <label>Nombre del Curso</label>
+                    <input type="text" id="curso" placeholder="Ej: Curso de puente" required>
+                </div>
+                <div>
+                    <label>Fechas</label>
+                    <input type="text" id="fechas" placeholder="Ej: 04/05/2026" required>
+                </div>
+                <div>
+                    <label>Horas</label>
+                    <input type="text" id="horas" placeholder="08:00-13:00" required>
+                </div>
+                <div class="full">
+                    <label>Lugar</label>
+                    <input type="text" id="lugar" required>
+                </div>
+                <div class="full">
+                    <label>Asistentes</label>
+                    <textarea id="asistentes" rows="2" placeholder="Separar por comas..."></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="saveBtn">Publicar en Dashboard</button>
+            <button type="button" class="btn btn-cancel" id="cancelBtn" style="display:none;">Cancelar Edición</button>
+        </form>
+        <div id="status-msg"></div>
+    </div>
+
+    <div class="card">
+        <h2>Cursos Activos en Pantalla</h2>
+        <div id="loading" class="loading-overlay">Sincronizando con Excel...</div>
+        <table id="courseTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Categoría</th>
+                    <th>Curso</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuJeAx_zEXSpfx15wpCHqUghug3GyRaexiHx9SwOTO3esxKnv_GgmVe65r11N3h14A/exec';
+
+    function formatSafeDate(dateStr) {
+        if (!dateStr) return "";
+        let str = String(dateStr);
+        if (str.includes('T') && str.includes('Z')) {
+            const d = new Date(str);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        return str;
+    }
+
+    function getVal(obj, key) {
+        const lowerKey = key.toLowerCase();
+        const foundKey = Object.keys(obj).find(k => k.toLowerCase() === lowerKey);
+        return foundKey ? obj[foundKey] : undefined;
+    }
+
+    async function fetchData() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('courseTable').style.display = 'none';
+        
+        try {
+            const resp = await fetch(SCRIPT_URL);
+            const data = await resp.json();
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const valCurso = getVal(item, 'curso') || "Sin nombre";
+                const valFechas = formatSafeDate(getVal(item, 'fechas'));
+                const valCat = getVal(item, 'categoria') || "GENERAL";
+                const valRowId = item.rowid || item.rowId;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge-cat">${valCat}</span></td>
+                    <td><strong>${valCurso}</strong></td>
+                    <td>${valFechas}</td>
+                    <td class="action-btns">
+                        <button class="btn-sm edit" onclick='prepEdit(${JSON.stringify(item)})'>Editar</button>
+                        <button class="btn-sm delete" onclick="deleteItem(${valRowId})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('courseTable').style.display = 'table';
+        } catch (e) {
+            document.getElementById('loading').innerText = "Error de conexión.";
+        }
+    }
+
+    document.getElementById('courseForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveBtn');
+        const rowId = document.getElementById('rowId').value;
+        saveBtn.disabled = true;
+
+        const payload = {
+            action: rowId ? 'edit' : 'add',
+            rowId: rowId,
+            categoria: document.getElementById('categoria').value,
+            titulo: document.getElementById('curso').value,
+            fechas: document.getElementById('fechas').value,
+            horas: document.getElementById('horas').value,
+            lugar: document.getElementById('lugar').value,
+            asistentes: document.getElementById('asistentes').value
+        };
+
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        resetForm();
+        setTimeout(fetchData, 1500);
+    });
+
+    function prepEdit(item) {
+        document.getElementById('form-title').innerText = "Editando Formación";
+        document.getElementById('rowId').value = item.rowid || item.rowId;
+        
+        // Ahora es un input de texto, le pasamos el valor directamente
+        document.getElementById('categoria').value = getVal(item, 'categoria') || '';
+        
+        document.getElementById('curso').value = getVal(item, 'curso') || '';
+        document.getElementById('fechas').value = formatSafeDate(getVal(item, 'fechas'));
+        document.getElementById('horas').value = getVal(item, 'horas') || '';
+        document.getElementById('lugar').value = getVal(item, 'lugar') || '';
+        document.getElementById('asistentes').value = getVal(item, 'asistentes') || '';
+        
+        document.getElementById('saveBtn').innerText = "Actualizar Cambios";
+        document.getElementById('cancelBtn').style.display = "block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deleteItem(id) {
+        if (!confirm("¿Eliminar formación?")) return;
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: 'delete', rowId: id}) });
+        fetchData();
+    }
+
+    function resetForm() {
+        document.getElementById('courseForm').reset();
+        document.getElementById('rowId').value = '';
+        document.getElementById('form-title').innerText = "Nueva Formación";
+        document.getElementById('saveBtn').innerText = "Publicar en Dashboard";
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+
+    document.getElementById('cancelBtn').onclick = resetForm;
+    fetchData(); 
+</script>
+
+</body>
+</html>
