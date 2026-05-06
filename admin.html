@@ -9,19 +9,19 @@
             --isopan-blue: #0084ad;
             --bg-gray: #f5f5f7;
             --text-dark: #1d1d1f;
-            --danger: #ff3b30;
+            --danger: #e30613;
             --warning: #ffcc00;
             --border: #d2d2d7;
+            --crane-blue: #005d7a;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-            background-color: var(--bg-gray);
-            margin: 0; padding: 20px;
+            background-color: var(--bg-gray); margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { width: 100%; max-width: 900px; }
+        .container { width: 100%; max-width: 950px; }
 
         .card {
             background: white; padding: 30px; border-radius: 20px;
@@ -38,80 +38,149 @@
             width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px;
             font-size: 15px; box-sizing: border-box; outline: none; background: #fff;
         }
-        input:focus { border-color: var(--isopan-blue); }
 
-        .btn {
-            padding: 14px 20px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;
-            transition: all 0.2s; font-size: 15px;
+        /* --- ZONA DE GRÚA --- */
+        .crane-zone {
+            margin-top: 25px; height: 350px; background: #f0f0f2;
+            border-radius: 15px; position: relative;
+            border: 1px solid #ccc; overflow: hidden;
         }
-        .btn-primary { background: var(--isopan-blue); color: white; width: 100%; margin-top: 10px; }
-        .btn-cancel { background: #e5e5e7; color: #1d1d1f; width: 100%; margin-top: 8px; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; font-size: 12px; color: #86868b; padding: 12px; border-bottom: 2px solid var(--bg-gray); }
-        td { padding: 15px 12px; border-bottom: 1px solid var(--bg-gray); font-size: 14px; }
+        .crane-bridge {
+            position: absolute; top: 10px; left: 0; right: 0; height: 12px;
+            background: repeating-linear-gradient(45deg, #f9d900, #f9d900 10px, #222 10px, #222 20px);
+            z-index: 10;
+        }
+
+        .crane-trolley {
+            position: absolute; top: 4px; left: 60px; width: 55px; height: 28px;
+            background: var(--crane-blue); border-radius: 4px; z-index: 11;
+            transition: left 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hoist-system {
+            position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .cable { width: 2px; background: #444; height: 20px; transition: height 1s ease-in-out; }
+        .hook { width: 18px; height: 14px; border: 3px solid #333; border-top: none; border-radius: 0 0 8px 8px; }
+
+        .payload {
+            position: absolute; top: 360px; left: 60px;
+            z-index: 5; transform: scale(0.5); transform-origin: top left;
+            opacity: 0;
+            transition: top 1s ease-in-out, left 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+        }
+
+        /* --- PREVIEW CARD (ESTILO image_9568b7) --- */
+        .isopan-preview-card {
+            background: white; width: 850px; border: 3px solid var(--isopan-blue);
+            border-radius: 35px; padding: 35px; display: flex; position: relative;
+        }
+
+        .p-ett { color: var(--isopan-blue); font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .p-title { font-size: 38px; font-weight: 800; color: #1d1d1f; margin: 0 0 25px 0; }
+        .sessions-wrapper { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+
+        .datetime-capsule {
+            display: flex; align-items: center; background: white;
+            border: 1.5px solid #e5e5e7; border-radius: 20px;
+            padding: 10px 25px; gap: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .calendar-side { text-align: center; line-height: 1.1; }
+        .month-label { color: var(--danger); font-size: 14px; font-weight: 900; text-transform: uppercase; display: block; }
+        .day-label { font-size: 32px; font-weight: 800; color: #1d1d1f; }
+        .hour-label { font-size: 28px; font-weight: 800; color: #1d1d1f; letter-spacing: -1px; }
+
+        .section-label { font-size: 18px; font-weight: 900; color: #000; margin-bottom: 5px; }
+        .location-text { color: #666; font-size: 20px; margin-bottom: 15px; font-weight: 500; }
         
-        .badge-cat { background: #f2f2f7; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; }
-        .action-btns { display: flex; gap: 8px; }
-        .btn-sm { padding: 8px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; font-weight: 600; }
-        .edit { background: var(--warning); color: black; }
-        .delete { background: var(--danger); color: white; }
+        .attendee-mini-pill {
+            background: #f2f2f7; border: 1px solid #d2d2d7; padding: 6px 15px; 
+            border-radius: 12px; font-size: 17px; color: #1d1d1f; font-weight: 600; margin: 2px; display: inline-block;
+        }
 
-        #status-msg { margin-top: 15px; text-align: center; font-weight: 600; padding: 10px; border-radius: 10px; display: none; }
-        .loading-overlay { text-align: center; padding: 40px; color: #86868b; font-style: italic; }
+        /* ANIMACIONES */
+        .state-picking .cable { height: 295px; }
+        .state-picking .payload { opacity: 1; top: 327px; }
+        .state-lifted .cable { height: 40px; }
+        .state-lifted .payload { top: 72px; opacity: 1; }
+        .state-exit .crane-trolley { left: 115% !important; transition: left 2s ease-in !important; }
+        .state-exit .payload { left: 115% !important; transition: left 2s ease-in !important; }
+
+        /* TABLA Y MODAL */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 11px; color: #86868b; padding: 12px; border-bottom: 2px solid var(--bg-gray); text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid var(--bg-gray); font-size: 14px; vertical-align: middle; transition: 0.4s; }
+        
+        .row-demolish td { transform: scale(0) rotate(5deg); opacity: 0; background: #ffe5e5; }
+        .table-date-pill { display: inline-block; background: #fff; border: 1px solid #d2d2d7; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+        .table-hour-text { color: #86868b; font-size: 12px; margin-left: 5px; }
+        
+        .btn-main { background: var(--isopan-blue); color: white; padding: 16px; border: none; border-radius: 14px; font-weight: 700; width: 100%; cursor: pointer; }
+        .btn-sm { padding: 8px 12px; border-radius: 8px; font-size: 12px; border: none; cursor: pointer; font-weight: 700; margin-left: 5px; }
+
+        #confirmModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
+        }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 320px; text-align: center; }
     </style>
 </head>
 <body>
 
+<div id="confirmModal">
+    <div class="modal-content">
+        <h3 style="margin-top:0">¿Eliminar curso?</h3>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn-sm" id="btnDoDelete" style="background:var(--danger); color:white; flex:1; padding:12px">Eliminar</button>
+            <button class="btn-sm" onclick="closeModal()" style="background:#eee; flex:1; padding:12px">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <div class="card">
-        <h2 id="form-title">Nueva Formación</h2>
+        <h2 id="form-title">Gestión de Formación</h2>
         <form id="courseForm">
             <input type="hidden" id="rowId"> 
             <div class="form-grid">
-                <div>
-                    <label>Categoría</label>
-                    <input type="text" id="categoria" placeholder="Ej: Seguridad, Calidad..." required>
-                </div>
-                <div>
-                    <label>Nombre del Curso</label>
-                    <input type="text" id="curso" placeholder="Ej: Curso de puente" required>
-                </div>
-                <div>
-                    <label>Fechas</label>
-                    <input type="text" id="fechas" placeholder="Ej: 04/05/2026" required>
-                </div>
-                <div>
-                    <label>Horas</label>
-                    <input type="text" id="horas" placeholder="08:00-13:00" required>
-                </div>
-                <div class="full">
-                    <label>Lugar</label>
-                    <input type="text" id="lugar" required>
-                </div>
-                <div class="full">
-                    <label>Asistentes</label>
-                    <textarea id="asistentes" rows="2" placeholder="Separar por comas..."></textarea>
+                <div><label>Categoría</label><input type="text" id="categoria" placeholder="ETT o Isopan" required></div>
+                <div><label>Curso</label><input type="text" id="curso" placeholder="Ej: Puente Grúa" required></div>
+                <div><label>Fechas (ej: 06/09, 07/09)</label><input type="text" id="fechas" placeholder="dd/mm" required></div>
+                <div><label>Horarios (ej: 08:00-12:00)</label><input type="text" id="horas" placeholder="08:00-12:00" required></div>
+                <div class="full"><label>Ubicación</label><input type="text" id="lugar" required></div>
+                <div class="full"><label>Asistentes (separar por comas)</label><textarea id="asistentes" rows="2" placeholder="Nombre 1, Nombre 2..."></textarea></div>
+            </div>
+            <button type="submit" class="btn-main" id="saveBtn">Publicar en Dashboard</button>
+            <button type="button" id="cancelBtn" style="display:none; width:100%; margin-top:10px; background:none; border:none; color:#86868b; cursor:pointer;" onclick="resetForm()">Cancelar Edición</button>
+        </form>
+
+        <div class="crane-zone" id="craneZone">
+            <div class="crane-bridge"></div>
+            <div class="crane-trolley"><div class="hoist-system"><div class="cable"></div><div class="hook"></div></div></div>
+            <div class="payload" id="payload">
+                <div class="isopan-preview-card">
+                    <div style="flex:1.4">
+                        <div class="p-ett" id="p-ett">CATEGORÍA</div>
+                        <div class="p-title" id="p-curso">Título del Curso</div>
+                        <div class="sessions-wrapper" id="p-sessions"></div>
+                    </div>
+                    <div style="flex:1; border-left:2px solid #efefef; padding-left:35px;">
+                        <div class="section-label">UBICACIÓN</div><p class="location-text" id="p-lugar">---</p>
+                        <div class="section-label">CONVOCADOS</div><div id="p-asistentes-list"></div>
+                    </div>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary" id="saveBtn">Publicar en Dashboard</button>
-            <button type="button" class="btn btn-cancel" id="cancelBtn" style="display:none;">Cancelar Edición</button>
-        </form>
-        <div id="status-msg"></div>
+        </div>
     </div>
 
     <div class="card">
-        <h2>Cursos Activos en Pantalla</h2>
-        <div id="loading" class="loading-overlay">Sincronizando...</div>
+        <h2>Cursos Activos</h2>
+        <div id="loading" style="text-align:center; padding:20px;">Sincronizando...</div>
         <table id="courseTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Categoría</th>
-                    <th>Curso</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Cat.</th><th>Formación</th><th>Sesiones</th><th style="text-align:right;">Acciones</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -119,70 +188,105 @@
 
 <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyuJeAx_zEXSpfx15wpCHqUghug3GyRaexiHx9SwOTO3esxKnv_GgmVe65r11N3h14A/exec';
+    let hasStarted = false;
+    let pendingDeleteId = null;
 
-    function formatSafeDate(dateStr) {
-        if (!dateStr) return "";
-        let str = String(dateStr);
-        if (str.includes('T') && str.includes('Z')) {
-            const d = new Date(str);
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
+    // --- ACTIVACIÓN DE GRÚA ---
+    function triggerCrane() {
+        if(!hasStarted) {
+            document.getElementById('payload').style.opacity = "1"; // Asegurar visibilidad
+            const zone = document.getElementById('craneZone');
+            zone.classList.remove('state-exit');
+            zone.classList.add('state-picking');
+            setTimeout(() => zone.classList.add('state-lifted'), 1000);
+            hasStarted = true;
         }
-        return str;
     }
 
-    function getVal(obj, key) {
-        const lowerKey = key.toLowerCase();
-        const foundKey = Object.keys(obj).find(k => k.toLowerCase() === lowerKey);
-        return foundKey ? obj[foundKey] : undefined;
-    }
+    ['categoria', 'curso', 'fechas', 'horas', 'lugar', 'asistentes'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            triggerCrane();
+            updatePreview();
+        });
+    });
 
-    async function fetchData() {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('courseTable').style.display = 'none';
+    function updatePreview() {
+        document.getElementById('p-ett').innerText = document.getElementById('categoria').value || 'CATEGORÍA';
+        document.getElementById('p-curso').innerText = document.getElementById('curso').value || 'Título del Curso';
+        document.getElementById('p-lugar').innerText = document.getElementById('lugar').value || '---';
         
-        try {
-            const resp = await fetch(SCRIPT_URL);
-            const data = await resp.json();
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+        // Sesiones
+        const fArray = document.getElementById('fechas').value.split(',');
+        const hArray = document.getElementById('horas').value.split(',');
+        const container = document.getElementById('p-sessions');
+        container.innerHTML = '';
 
-            data.forEach(item => {
-                const valCurso = getVal(item, 'curso') || "Sin nombre";
-                const valFechas = formatSafeDate(getVal(item, 'fechas'));
-                const valCat = getVal(item, 'categoria') || "GENERAL";
-                const valRowId = item.rowid || item.rowId;
+        fArray.forEach((fecha, index) => {
+            if(fecha.trim().includes('/')) {
+                const parts = fecha.trim().split('/');
+                const months = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+                const mes = months[parseInt(parts[1])-1] || '---';
+                const hora = hArray[index] ? hArray[index].trim() : (hArray[0] || '--:--');
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><span class="badge-cat">${valCat}</span></td>
-                    <td><strong>${valCurso}</strong></td>
-                    <td>${valFechas}</td>
-                    <td class="action-btns">
-                        <button class="btn-sm edit" onclick='prepEdit(${JSON.stringify(item)})'>Editar</button>
-                        <button class="btn-sm delete" onclick="deleteItem(${valRowId})">Eliminar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('courseTable').style.display = 'table';
-        } catch (e) {
-            document.getElementById('loading').innerText = "Error de conexión.";
-        }
+                const capsule = document.createElement('div');
+                capsule.className = 'datetime-capsule';
+                capsule.innerHTML = `<div class="calendar-side"><span class="month-label">${mes}</span><span class="day-label">${parts[0].padStart(2,'0')}</span></div><div class="hour-label">${hora}</div>`;
+                container.appendChild(capsule);
+            }
+        });
+
+        // ASISTENTES (CONVOCADOS)
+        const list = document.getElementById('p-asistentes-list');
+        list.innerHTML = '';
+        const asistentesVal = document.getElementById('asistentes').value;
+        asistentesVal.split(',').forEach(n => {
+            if(n.trim()) {
+                const span = document.createElement('span');
+                span.className = 'attendee-mini-pill';
+                span.innerText = n.trim();
+                list.appendChild(span);
+            }
+        });
     }
+
+    // --- CRUD ---
+    async function fetchData() {
+        const resp = await fetch(SCRIPT_URL);
+        const data = await resp.json();
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        data.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.id = `row-${item.rowid || item.rowId}`;
+            const fts = (item.fechas || '').split(',');
+            const hrs = (item.horas || '').split(',');
+            const sessionsHtml = fts.map((f, i) => `<div style="margin-bottom:4px"><span class="table-date-pill">${f.trim()}</span><span class="table-hour-text">${hrs[i] || hrs[0] || ''}</span></div>`).join('');
+            tr.innerHTML = `<td><span class="badge-ett">${item.categoria || 'ETT'}</span></td><td><strong>${item.curso}</strong></td><td>${sessionsHtml}</td><td style="text-align:right;"><button class="btn-sm" style="background:var(--warning)" onclick='prepEdit(${JSON.stringify(item)})'>Editar</button><button class="btn-sm" style="background:var(--danger);color:white" onclick="askDelete(${item.rowid || item.rowId})">Eliminar</button></td>`;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('courseTable').style.display = 'table';
+    }
+
+    function askDelete(id) { pendingDeleteId = id; document.getElementById('confirmModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('confirmModal').style.display = 'none'; }
+
+    document.getElementById('btnDoDelete').onclick = async () => {
+        const id = pendingDeleteId;
+        closeModal();
+        document.getElementById(`row-${id}`).classList.add('row-demolish');
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: 'delete', rowId: id}) });
+        setTimeout(fetchData, 600);
+    };
 
     document.getElementById('courseForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const saveBtn = document.getElementById('saveBtn');
-        const rowId = document.getElementById('rowId').value;
-        saveBtn.disabled = true;
-
+        saveBtn.disabled = true; saveBtn.innerText = "Transportando...";
+        document.getElementById('craneZone').classList.add('state-exit');
         const payload = {
-            action: rowId ? 'edit' : 'add',
-            rowId: rowId,
+            action: document.getElementById('rowId').value ? 'edit' : 'add',
+            rowId: document.getElementById('rowId').value,
             categoria: document.getElementById('categoria').value,
             titulo: document.getElementById('curso').value,
             fechas: document.getElementById('fechas').value,
@@ -190,48 +294,42 @@
             lugar: document.getElementById('lugar').value,
             asistentes: document.getElementById('asistentes').value
         };
-
         await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        resetForm();
-        setTimeout(fetchData, 1500);
+        setTimeout(() => { resetForm(); fetchData(); }, 2200);
     });
 
+    function resetForm() {
+        document.getElementById('payload').style.opacity = "0";
+        setTimeout(() => {
+            document.getElementById('courseForm').reset();
+            document.getElementById('rowId').value = '';
+            document.getElementById('saveBtn').disabled = false;
+            document.getElementById('saveBtn').innerText = "Publicar en Dashboard";
+            document.getElementById('cancelBtn').style.display = "none";
+            document.getElementById('craneZone').classList.remove('state-picking', 'state-lifted', 'state-exit');
+            hasStarted = false;
+            updatePreview();
+        }, 500);
+    }
+
     function prepEdit(item) {
-        document.getElementById('form-title').innerText = "Editando Formación";
         document.getElementById('rowId').value = item.rowid || item.rowId;
-        
-        // Ahora es un input de texto, le pasamos el valor directamente
-        document.getElementById('categoria').value = getVal(item, 'categoria') || '';
-        
-        document.getElementById('curso').value = getVal(item, 'curso') || '';
-        document.getElementById('fechas').value = formatSafeDate(getVal(item, 'fechas'));
-        document.getElementById('horas').value = getVal(item, 'horas') || '';
-        document.getElementById('lugar').value = getVal(item, 'lugar') || '';
-        document.getElementById('asistentes').value = getVal(item, 'asistentes') || '';
-        
-        document.getElementById('saveBtn').innerText = "Actualizar Cambios";
+        document.getElementById('categoria').value = item.categoria || '';
+        document.getElementById('curso').value = item.curso || '';
+        document.getElementById('fechas').value = item.fechas || '';
+        document.getElementById('horas').value = item.horas || '';
+        document.getElementById('lugar').value = item.lugar || '';
+        document.getElementById('asistentes').value = item.asistentes || '';
         document.getElementById('cancelBtn').style.display = "block";
+        document.getElementById('form-title').innerText = "Editando Formación";
+        
+        hasStarted = false; 
+        triggerCrane(); // Activa grúa al editar
+        updatePreview();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    async function deleteItem(id) {
-        if (!confirm("¿Eliminar formación?")) return;
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: 'delete', rowId: id}) });
-        fetchData();
-    }
-
-    function resetForm() {
-        document.getElementById('courseForm').reset();
-        document.getElementById('rowId').value = '';
-        document.getElementById('form-title').innerText = "Nueva Formación";
-        document.getElementById('saveBtn').innerText = "Publicar en Dashboard";
-        document.getElementById('saveBtn').disabled = false;
-        document.getElementById('cancelBtn').style.display = "none";
-    }
-
-    document.getElementById('cancelBtn').onclick = resetForm;
-    fetchData(); 
+    fetchData();
 </script>
-
 </body>
 </html>
