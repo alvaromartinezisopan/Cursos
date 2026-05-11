@@ -76,9 +76,8 @@
     </div>
 
     <script>
-        const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv&cb=${Date.now()}`;
+        const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv`;
         
-        // Guardamos el JSON de los cursos mostrados para comparar
         let currentSnapshot = ""; 
 
         function cursoYaTermino(fechaStr) {
@@ -113,18 +112,22 @@
 
         async function loadCursos() {
             const status = document.getElementById('status-msg');
+            const container = document.getElementById('course-grid');
+
             try {
+                // Usamos t= para evitar cache, pero validamos el contenido
                 const response = await fetch(`${url}&t=${Date.now()}`);
                 const csvRaw = await response.text();
-                const data = parseCSV(csvRaw);
                 
+                // VALIDACIÓN ANTI-PARPADEO: Si el CSV viene vacío o corrupto por la red, no hacemos nada
+                if (!csvRaw || csvRaw.length < 50) return;
+
+                const data = parseCSV(csvRaw);
                 let cursosExcel = data;
                 if (data.length > 0 && data[0][0].toLowerCase().includes('cat')) {
                     cursosExcel = data.slice(1);
                 }
 
-                // --- PROCESADO PREVIO PARA COMPARAR ---
-                // Creamos una lista de lo que REALMENTE se va a ver en pantalla
                 const cursosFiltrados = cursosExcel.filter(columns => {
                     if (columns.length < 2 || !columns[1]?.trim()) return false;
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
@@ -132,30 +135,24 @@
                     return !(ultimaFecha && cursoYaTermino(ultimaFecha));
                 });
 
-                // Convertimos esa lista a un texto único (Snapshot)
                 const newSnapshot = JSON.stringify(cursosFiltrados);
 
-                // SI EL SNAPSHOT ES IGUAL AL ANTERIOR, NO ACTUALIZAMOS NADA
-                if (newSnapshot === currentSnapshot) {
-                    return; 
-                }
+                // SI NO HAY CAMBIOS REALES, SALIMOS (Esto evita que se reinicien las animaciones)
+                if (newSnapshot === currentSnapshot) return;
 
-                // Si hay cambios, actualizamos el snapshot y el HTML
                 currentSnapshot = newSnapshot;
-                const container = document.getElementById('course-grid');
                 let htmlContent = '';
                 let contadorVisibles = 0;
 
                 cursosFiltrados.forEach((columns, index) => {
                     contadorVisibles++;
-                    const categoria = columns[0].trim() || 'General';
-                    const titulo = columns[1].trim();
+                    const categoria = columns[0]?.trim() || 'General';
+                    const titulo = columns[1]?.trim();
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
                     const horasArr = (columns[3] || '').split(',').map(h => h.trim());
                     const lugar = columns[4] || 'Por definir';
                     const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
                     
-                    // El badge NUEVO sale solo si es el último de la lista real del Excel
                     const esNuevo = (index === cursosFiltrados.length - 1);
 
                     let sessionsHtml = '';
@@ -190,16 +187,16 @@
                 });
 
                 status.style.display = contadorVisibles > 0 ? "none" : "block";
-                status.innerText = contadorVisibles === 0 ? " " : "";
                 container.innerHTML = htmlContent;
 
             } catch (e) {
-                console.error(e);
+                console.error("Error cargando datos:", e);
             }
         }
 
         loadCursos();
-        setInterval(loadCursos, 30000); 
+        // Aumentamos a 45 segundos para dar margen a Google de estabilizar el archivo tras guardar
+        setInterval(loadCursos, 45000); 
     </script>
 </body>
 </html>
