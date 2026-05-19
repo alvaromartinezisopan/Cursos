@@ -12,6 +12,8 @@
             --text-secondary: #48484a;
             --apple-red: #ff3b30;
             --isopan-blue: #0084ad;
+            --alert-orange: #ff9500;
+            --alert-yellow: #ffcc00;
         }
 
         html, body {
@@ -34,26 +36,61 @@
             color: #86868b; font-size: 14px; text-align: center;
         }
 
+        /* Se eliminaron la opacidad inicial, el transform y la animación de entrada */
         .course-card {
             background: var(--isopan-gray-card); border-radius: 16px;
             padding: 18px; display: flex; gap: 20px; position: relative;
-            opacity: 0; transform: translateY(20px);
-            animation: slideUp 0.5s ease forwards; border: 1px solid #eeeeef;
+            border: 1px solid #eeeeef;
         }
 
-        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        /* Se eliminó la animación de pulso (glow) del borde */
+        .new-highlight { 
+            border: 2px solid var(--isopan-blue); 
+            background: #ffffff; 
+        }
 
-        .new-highlight { border: 2px solid var(--isopan-blue); background: #ffffff; }
+        /* CONTENEDOR DE BADGES: Mantiene todo alineado arriba a la derecha */
+        .badges-wrapper {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        /* ESTILO GENERAL PARA LOS BADGES */
+        .badge-item {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
         .new-badge {
-            position: absolute; top: -10px; right: 20px;
-            background: var(--isopan-blue); color: white;
-            font-size: 9px; font-weight: 800; padding: 4px 10px;
-            border-radius: 20px; text-transform: uppercase;
+            background: var(--isopan-blue);
+            color: white;
             box-shadow: 0 4px 8px rgba(0, 132, 173, 0.2);
         }
 
-        .card-left { flex: 1.2; border-right: 1px solid #e5e5e7; padding-right: 15px; }
-        .card-right { flex: 0.8; display: flex; flex-direction: column; }
+        .badge-hoy { background: var(--alert-orange); color: white; }
+        .badge-manana { background: var(--alert-yellow); color: #1d1d1f; }
+
+        .card-left { 
+            flex: 0.6; 
+            border-right: 1px solid #e5e5e7; 
+            padding-right: 20px; 
+        }
+        
+        .card-right { 
+            flex: 1.4; 
+            display: flex; 
+            flex-direction: column; 
+            padding-left: 15px; 
+        }
+
         .category-label { font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; margin-bottom: 4px; }
         .course-title { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 12px 0; color: var(--text-main); }
         .sessions-wrapper { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -93,6 +130,29 @@
             } catch (e) { return false; }
         }
 
+        function obtenerEtiquetaDia(fechaStr) {
+            if (!fechaStr || !fechaStr.includes('/')) return "";
+            try {
+                const ahora = new Date();
+                const partes = fechaStr.trim().split('/');
+                const dia = parseInt(partes[0]);
+                const mes = parseInt(partes[1]) - 1;
+                const anio = partes[2] ? parseInt(partes[2]) : ahora.getFullYear();
+                
+                const fechaCurso = new Date(anio, mes, dia);
+                
+                const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+                const manana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
+
+                if (fechaCurso.getTime() === hoy.getTime()) {
+                    return `<div class="badge-item badge-hoy">HOY</div>`;
+                } else if (fechaCurso.getTime() === manana.getTime()) {
+                    return `<div class="badge-item badge-manana">MAÑANA</div>`;
+                }
+                return "";
+            } catch (e) { return ""; }
+        }
+
         function parseCSV(text) {
             const rows = [];
             let row = [];
@@ -115,11 +175,9 @@
             const container = document.getElementById('course-grid');
 
             try {
-                // Usamos t= para evitar cache, pero validamos el contenido
                 const response = await fetch(`${url}&t=${Date.now()}`);
                 const csvRaw = await response.text();
                 
-                // VALIDACIÓN ANTI-PARPADEO: Si el CSV viene vacío o corrupto por la red, no hacemos nada
                 if (!csvRaw || csvRaw.length < 50) return;
 
                 const data = parseCSV(csvRaw);
@@ -137,15 +195,12 @@
 
                 const newSnapshot = JSON.stringify(cursosFiltrados);
 
-                // SI NO HAY CAMBIOS REALES, SALIMOS (Esto evita que se reinicien las animaciones)
                 if (newSnapshot === currentSnapshot) return;
 
                 currentSnapshot = newSnapshot;
                 let htmlContent = '';
-                let contadorVisibles = 0;
 
                 cursosFiltrados.forEach((columns, index) => {
-                    contadorVisibles++;
                     const categoria = columns[0]?.trim() || 'General';
                     const titulo = columns[1]?.trim();
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
@@ -154,6 +209,7 @@
                     const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
                     
                     const esNuevo = (index === cursosFiltrados.length - 1);
+                    const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0]) : "";
 
                     let sessionsHtml = '';
                     fechasArr.forEach((f, i) => {
@@ -169,9 +225,19 @@
                             </div>`;
                     });
 
+                    let badgesBlock = '';
+                    if (esNuevo || etiquetaDiaHtml) {
+                        badgesBlock = `
+                            <div class="badges-wrapper">
+                                ${etiquetaDiaHtml}
+                                ${esNuevo ? '<div class="badge-item new-badge">Nuevo</div>' : ''}
+                            </div>`;
+                    }
+
+                    /* Se eliminó el atributo style que calculaba el retraso de la animación */
                     htmlContent += `
-                        <div class="course-card ${esNuevo ? 'new-highlight' : ''}" style="animation-delay: ${contadorVisibles * 0.1}s">
-                            ${esNuevo ? '<div class="new-badge">Nuevo</div>' : ''}
+                        <div class="course-card ${esNuevo ? 'new-highlight' : ''}">
+                            ${badgesBlock}
                             <div class="card-left">
                                 <span class="category-label">${categoria}</span>
                                 <h2 class="course-title">${titulo}</h2>
@@ -186,7 +252,7 @@
                         </div>`;
                 });
 
-                status.style.display = contadorVisibles > 0 ? "none" : "block";
+                status.style.display = cursosFiltrados.length > 0 ? "none" : "block";
                 container.innerHTML = htmlContent;
 
             } catch (e) {
@@ -195,7 +261,6 @@
         }
 
         loadCursos();
-        // Aumentamos a 45 segundos para dar margen a Google de estabilizar el archivo tras guardar
         setInterval(loadCursos, 45000); 
     </script>
 </body>
