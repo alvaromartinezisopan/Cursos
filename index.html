@@ -14,6 +14,7 @@
             --isopan-blue: #0084ad;
             --alert-orange: #ff9500;
             --alert-yellow: #ffcc00;
+            --alert-weekday: #3a3a3c; /* Color gris oscuro para los días de la semana */
         }
 
         html, body {
@@ -36,20 +37,17 @@
             color: #86868b; font-size: 14px; text-align: center;
         }
 
-        /* Se eliminaron la opacidad inicial, el transform y la animación de entrada */
         .course-card {
             background: var(--isopan-gray-card); border-radius: 16px;
             padding: 18px; display: flex; gap: 20px; position: relative;
             border: 1px solid #eeeeef;
         }
 
-        /* Se eliminó la animación de pulso (glow) del borde */
         .new-highlight { 
             border: 2px solid var(--isopan-blue); 
             background: #ffffff; 
         }
 
-        /* CONTENEDOR DE BADGES: Mantiene todo alineado arriba a la derecha */
         .badges-wrapper {
             position: absolute;
             top: -10px;
@@ -59,7 +57,6 @@
             z-index: 10;
         }
 
-        /* ESTILO GENERAL PARA LOS BADGES */
         .badge-item {
             font-size: 9px;
             font-weight: 800;
@@ -77,6 +74,7 @@
 
         .badge-hoy { background: var(--alert-orange); color: white; }
         .badge-manana { background: var(--alert-yellow); color: #1d1d1f; }
+        .badge-semana { background: var(--alert-weekday); color: white; } /* Estilo para Lunes, Martes, etc. */
 
         .card-left { 
             flex: 0.6; 
@@ -130,6 +128,7 @@
             } catch (e) { return false; }
         }
 
+        // LÓGICA MEJORADA: Detecta Hoy, Mañana o el día de la semana actual
         function obtenerEtiquetaDia(fechaStr) {
             if (!fechaStr || !fechaStr.includes('/')) return "";
             try {
@@ -144,11 +143,29 @@
                 const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
                 const manana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
 
+                // 1. Validar si es HOY o MAÑANA
                 if (fechaCurso.getTime() === hoy.getTime()) {
                     return `<div class="badge-item badge-hoy">HOY</div>`;
                 } else if (fechaCurso.getTime() === manana.getTime()) {
                     return `<div class="badge-item badge-manana">MAÑANA</div>`;
                 }
+
+                // 2. Validar si está dentro de la misma semana en curso (Lunes a Domingo)
+                const diaSemanaActual = hoy.getDay(); 
+                const distanciaAlLunes = diaSemanaActual === 0 ? -6 : 1 - diaSemanaActual;
+                
+                const lunesDeEstaSemana = new Date(hoy);
+                lunesDeEstaSemana.setDate(hoy.getDate() + distanciaAlLunes);
+                
+                const domingoDeEstaSemana = new Date(lunesDeEstaSemana);
+                domingoDeEstaSemana.setDate(lunesDeEstaSemana.getDate() + 6);
+
+                if (fechaCurso >= lunesDeEstaSemana && fechaCurso <= domingoDeEstaSemana) {
+                    const diasNombre = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+                    const nombreDia = diasNombre[fechaCurso.getDay()];
+                    return `<div class="badge-item badge-semana">${nombreDia}</div>`;
+                }
+
                 return "";
             } catch (e) { return ""; }
         }
@@ -234,7 +251,6 @@
                             </div>`;
                     }
 
-                    /* Se eliminó el atributo style que calculaba el retraso de la animación */
                     htmlContent += `
                         <div class="course-card ${esNuevo ? 'new-highlight' : ''}">
                             ${badgesBlock}
