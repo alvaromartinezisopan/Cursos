@@ -24,7 +24,6 @@
             overflow: hidden;
         }
 
-        /* Contenedor principal en pantalla completa */
         .main-wrapper {
             display: flex; 
             flex-direction: column; 
@@ -40,7 +39,7 @@
             z-index: 20;
         }
 
-        /* Contenedor de los cursos que van a rotar */
+        /* Contenedor del curso que va a rotar abajo */
         .grid-container { 
             display: flex; 
             flex-direction: column; 
@@ -50,7 +49,7 @@
             transition: opacity 0.4s ease-in-out;
         }
 
-        /* PUNTOS INDICADORES: Forzados con margen automático para ir al fondo real de la pantalla */
+        /* PUNTOS INDICADORES siempre abajo */
         .page-indicators {
             margin-top: auto; 
             display: flex;
@@ -63,106 +62,47 @@
         }
         
         .dot {
-            width: 8px; 
-            height: 8px; 
-            border-radius: 50%;
+            width: 8px; height: 8px; border-radius: 50%;
             background-color: #d1d1d6; 
             transition: background-color 0.4s ease, transform 0.3s ease;
         }
-        
-        .dot.active { 
-            background-color: var(--isopan-blue); 
-            transform: scale(1.2);
-        }
+        .dot.active { background-color: var(--isopan-blue); transform: scale(1.2); }
 
-        /* Loader Moderno Estilo Apple */
         #status-wrapper {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             background-color: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            z-index: 100;
-            transition: opacity 0.5s ease-out;
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 100; transition: opacity 0.5s ease-out;
         }
 
         .spinner {
-            width: 32px;
-            height: 32px;
-            border: 3px solid rgba(0, 0, 0, 0.05);
-            border-top-color: #1d1d1f;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-bottom: 14px;
+            width: 32px; height: 32px; border: 3px solid rgba(0, 0, 0, 0.05);
+            border-top-color: #1d1d1f; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin-bottom: 14px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .status-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-main);
-            letter-spacing: -0.2px;
-        }
+        .status-text { font-size: 14px; font-weight: 500; color: var(--text-main); }
 
         .course-card {
             background: var(--isopan-gray-card); border-radius: 16px;
             padding: 18px; display: flex; gap: 20px; position: relative;
-            border: 1px solid #eeeeef;
-            flex-shrink: 0; 
-            margin-top: 14px; 
+            border: 1px solid #eeeeef; flex-shrink: 0; margin-top: 14px; 
         }
 
-        .new-highlight { 
-            border: 2px solid var(--isopan-blue); 
-            background: #ffffff; 
-        }
+        .new-highlight { border: 2px solid var(--isopan-blue); background: #ffffff; }
 
-        .badges-wrapper {
-            position: absolute;
-            top: -12px; 
-            right: 20px;
-            display: flex;
-            gap: 6px;
-            z-index: 10;
-        }
-
-        .badge-item {
-            font-size: 9px;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .new-badge {
-            background: var(--isopan-blue);
-            color: white;
-        }
-
+        .badges-wrapper { position: absolute; top: -12px; right: 20px; display: flex; gap: 6px; z-index: 10; }
+        .badge-item { font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); }
+        .new-badge { background: var(--isopan-blue); color: white; }
         .badge-hoy { background: var(--alert-orange); color: white; }
         .badge-manana { background: var(--alert-yellow); color: #1d1d1f; }
         .badge-semana { background: var(--alert-weekday); color: white; }
 
-        .card-left { 
-            flex: 0.6; 
-            border-right: 1px solid #e5e5e7; 
-            padding-right: 20px; 
-        }
-        
-        .card-right { 
-            flex: 1.4; 
-            display: flex; 
-            flex-direction: column; 
-            padding-left: 15px; 
-        }
+        .card-left { flex: 0.6; border-right: 1px solid #e5e5e7; padding-right: 20px; }
+        .card-right { flex: 1.4; display: flex; flex-direction: column; padding-left: 15px; }
 
         .category-label { font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; margin-bottom: 4px; }
         .course-title { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 12px 0; color: var(--text-main); }
@@ -195,8 +135,8 @@
         const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv`;
         
         // --- CONFIGURACIÓN ---
-        const cursosPorPagina = 2;   
-        const segundosPorPagina = 30; 
+        const cursosPorPagina = 1;    // 1 curso rotando abajo (+ 1 fijo arriba = 2 cursos visibles)
+        const segundosPorPagina = 30; // Tiempo en segundos entre cada rotación
         // ---------------------
 
         let currentSnapshot = ""; 
@@ -228,18 +168,36 @@
             }
         }
 
-        function cursoYaTermino(fechaStr) {
+        // --- NUEVA LÓGICA DE CADUCIDAD POR HORA ---
+        function cursoYaTermino(fechaStr, horaStr) {
             if (!fechaStr) return false;
             try {
                 const fechaCurso = obtenerFechaObjeto(fechaStr);
                 if (fechaCurso.getTime() === 864000000000000) return false;
+
+                let horas = 23, minutos = 59; // Por defecto fin del día si no hay horas legibles
+                
+                if (horaStr) {
+                    // Busca todos los patrones de hora (ej. "09:00", "14:30") en el texto
+                    const matches = horaStr.match(/\d{1,2}:\d{2}/g);
+                    if (matches && matches.length > 0) {
+                        // Toma la ÚLTIMA hora escrita (Ej: "10:00 - 12:30" -> tomará "12:30")
+                        const ultimaHora = matches[matches.length - 1];
+                        const partesHora = ultimaHora.split(':');
+                        horas = parseInt(partesHora[0], 10);
+                        minutos = parseInt(partesHora[1], 10);
+                    }
+                }
+
+                // Creamos un objeto Date exacto de cuándo termina el curso
+                const finDelCurso = new Date(fechaCurso.getFullYear(), fechaCurso.getMonth(), fechaCurso.getDate(), horas, minutos, 59);
                 const ahora = new Date();
-                const finDelDia = new Date(fechaCurso.getFullYear(), fechaCurso.getMonth(), fechaCurso.getDate(), 23, 59, 59);
-                return ahora > finDelDia;
+                
+                return ahora > finDelCurso;
             } catch (e) { return false; }
         }
 
-        function obtenerEtiquetaDia(fechaStr) {
+        function obtenerEtiquetaDia(fechaStr, horaStr) {
             if (!fechaStr) return "";
             try {
                 const fechaCurso = obtenerFechaObjeto(fechaStr);
@@ -251,6 +209,7 @@
                 const tiempoCurso = new Date(fechaCurso.getFullYear(), fechaCurso.getMonth(), fechaCurso.getDate()).getTime();
 
                 if (tiempoCurso === hoy.getTime()) {
+                    // Verificación extra: si es hoy pero ya pasó la hora de inicio (opcional)
                     return `<div class="badge-item badge-hoy">HOY</div>`;
                 } else if (tiempoCurso === manana.getTime()) {
                     return `<div class="badge-item badge-manana">MAÑANA</div>`;
@@ -298,7 +257,7 @@
             const now = Date.now();
             
             const esNuevo = seenCourses[courseId] && (now - seenCourses[courseId] < (24 * 60 * 60 * 1000));
-            const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0]) : "";
+            const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0], horasArr[0]) : "";
 
             let sessionsHtml = '';
             fechasArr.forEach((f, i) => {
@@ -353,7 +312,6 @@
             let htmlContent = '';
             cursosPaginados.forEach(curso => { htmlContent += construirCardHtml(curso); });
 
-            // Generación blindada de indicadores (Muestra mínimo 1 si hay datos)
             const totalPages = Math.max(1, Math.ceil(remainingCourses.length / cursosPorPagina));
             let indicatorsHtml = '';
             for(let i=0; i < totalPages; i++) {
@@ -385,7 +343,7 @@
             const remainingLength = allCourses.length > 1 ? allCourses.length - 1 : 0;
             const totalPages = Math.ceil(remainingLength / cursosPorPagina);
             
-            if (totalPages <= 1) return; // No cicla si todo entra en una sola vista, pero el punto ya se queda dibujado fijo.
+            if (totalPages <= 1) return; 
             
             cycleInterval = setInterval(() => {
                 currentPage++;
@@ -421,8 +379,16 @@
 
                 const cursosFiltrados = cursosExcel.filter(columns => {
                     if (columns.length < 2 || !columns[1]?.trim()) return false;
+                    
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-                    if (fechasArr.length > 0 && cursoYaTermino(fechasArr[fechasArr.length - 1])) return false;
+                    const horasArr = (columns[3] || '').split(',').map(h => h.trim());
+                    
+                    if (fechasArr.length > 0) {
+                        const ultimaFecha = fechasArr[fechasArr.length - 1];
+                        const ultimaHora = horasArr[fechasArr.length - 1] || horasArr[horasArr.length - 1] || "";
+                        // Filtro aplicado: si la hora de fin ya pasó respecto al reloj actual, desaparece.
+                        if (cursoYaTermino(ultimaFecha, ultimaHora)) return false; 
+                    }
                     return true;
                 });
 
