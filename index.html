@@ -14,7 +14,7 @@
             --isopan-blue: #0084ad;
             --alert-orange: #ff9500;
             --alert-yellow: #ffcc00;
-            --alert-weekday: #3a3a3c;
+            --alert-weekday: #3a3a3c; /* Color gris oscuro para los días de la semana */
         }
 
         html, body {
@@ -25,84 +25,69 @@
         }
 
         .main-wrapper {
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            padding: 20px; 
-            box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            height: 100vh; padding: 15px; box-sizing: border-box;
         }
 
-        /* El curso más cercano se queda estrictamente arriba */
-        #fixed-course {
-            width: 100%;
-            flex-shrink: 0;
-            z-index: 20;
-        }
+        .grid-container { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 
-        /* Contenedor del curso que va a rotar abajo */
-        .grid-container { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 0; 
-            width: 100%; 
-            opacity: 1;
-            transition: opacity 0.4s ease-in-out;
+        #status-msg {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #86868b; font-size: 14px; text-align: center;
         }
-
-        /* PUNTOS INDICADORES siempre abajo */
-        .page-indicators {
-            margin-top: auto; 
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            padding-bottom: 10px;
-            padding-top: 15px;
-            min-height: 8px;
-            z-index: 30;
-        }
-        
-        .dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background-color: #d1d1d6; 
-            transition: background-color 0.4s ease, transform 0.3s ease;
-        }
-        .dot.active { background-color: var(--isopan-blue); transform: scale(1.2); }
-
-        #status-wrapper {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            background-color: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            z-index: 100; transition: opacity 0.5s ease-out;
-        }
-
-        .spinner {
-            width: 32px; height: 32px; border: 3px solid rgba(0, 0, 0, 0.05);
-            border-top-color: #1d1d1f; border-radius: 50%;
-            animation: spin 0.8s linear infinite; margin-bottom: 14px;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .status-text { font-size: 14px; font-weight: 500; color: var(--text-main); }
 
         .course-card {
             background: var(--isopan-gray-card); border-radius: 16px;
             padding: 18px; display: flex; gap: 20px; position: relative;
-            border: 1px solid #eeeeef; flex-shrink: 0; margin-top: 14px; 
+            border: 1px solid #eeeeef;
         }
 
-        .new-highlight { border: 2px solid var(--isopan-blue); background: #ffffff; }
+        .new-highlight { 
+            border: 2px solid var(--isopan-blue); 
+            background: #ffffff; 
+        }
 
-        .badges-wrapper { position: absolute; top: -12px; right: 20px; display: flex; gap: 6px; z-index: 10; }
-        .badge-item { font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); }
-        .new-badge { background: var(--isopan-blue); color: white; }
+        .badges-wrapper {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .badge-item {
+            font-size: 9px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .new-badge {
+            background: var(--isopan-blue);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 132, 173, 0.2);
+        }
+
         .badge-hoy { background: var(--alert-orange); color: white; }
         .badge-manana { background: var(--alert-yellow); color: #1d1d1f; }
-        .badge-semana { background: var(--alert-weekday); color: white; }
+        .badge-semana { background: var(--alert-weekday); color: white; } /* Estilo para Lunes, Martes, etc. */
 
-        .card-left { flex: 0.6; border-right: 1px solid #e5e5e7; padding-right: 20px; }
-        .card-right { flex: 1.4; display: flex; flex-direction: column; padding-left: 15px; }
+        .card-left { 
+            flex: 0.6; 
+            border-right: 1px solid #e5e5e7; 
+            padding-right: 20px; 
+        }
+        
+        .card-right { 
+            flex: 1.4; 
+            display: flex; 
+            flex-direction: column; 
+            padding-left: 15px; 
+        }
 
         .category-label { font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; margin-bottom: 4px; }
         .course-title { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 12px 0; color: var(--text-main); }
@@ -115,123 +100,81 @@
         .right-label { font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase; margin-bottom: 6px; }
         .location-box { margin-bottom: 15px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; font-weight: 500; }
         .attendee-tag { background: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-secondary); border: 1px solid #e5e5e7; margin-right: 4px; margin-bottom: 4px; display: inline-block; }
-
     </style>
 </head>
 <body>
 
-    <div id="status-wrapper">
-        <div class="spinner"></div>
-        <div class="status-text" id="status-text">Actualizando cursos...</div>
-    </div>
+    <div id="status-msg">Cargando cursos...</div>
 
     <div class="main-wrapper">
-        <div id="fixed-course"></div>
         <div class="grid-container" id="course-grid"></div>
-        <div class="page-indicators" id="indicators"></div>
     </div>
 
     <script>
         const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv`;
         
-        // --- CONFIGURACIÓN ---
-        const cursosPorPagina = 1;    // 1 curso rotando abajo (+ 1 fijo arriba = 2 cursos visibles)
-        const segundosPorPagina = 30; // Tiempo en segundos entre cada rotación
-        // ---------------------
-
         let currentSnapshot = ""; 
-        let cycleInterval = null;
-        let allCourses = [];
-        let currentPage = 0;
-        let seenCourses = {};
-        let lastPageRendered = -1;
-        let currentCoursesHash = "";
 
-        function obtenerFechaObjeto(fechaStr) {
-            if (!fechaStr) return new Date(864000000000000);
+        function cursoYaTermino(fechaStr) {
+            if (!fechaStr || !fechaStr.includes('/')) return false;
             try {
-                const normalizada = fechaStr.trim().replace(/[-.]/g, '/');
-                if (!normalizada.includes('/')) return new Date(864000000000000);
-                
-                const partes = normalizada.split('/');
-                const dia = parseInt(partes[0], 10);
-                const mes = parseInt(partes[1], 10) - 1;
                 const ahora = new Date();
-                let anio = partes[2] ? parseInt(partes[2].trim(), 10) : ahora.getFullYear();
-                
-                if (anio < 100) anio += 2000; 
-                
-                const d = new Date(anio, mes, dia);
-                return isNaN(d.getTime()) ? new Date(864000000000000) : d;
-            } catch (e) { 
-                return new Date(864000000000000); 
-            }
-        }
-
-        // --- NUEVA LÓGICA DE CADUCIDAD POR HORA ---
-        function cursoYaTermino(fechaStr, horaStr) {
-            if (!fechaStr) return false;
-            try {
-                const fechaCurso = obtenerFechaObjeto(fechaStr);
-                if (fechaCurso.getTime() === 864000000000000) return false;
-
-                let horas = 23, minutos = 59; // Por defecto fin del día si no hay horas legibles
-                
-                if (horaStr) {
-                    // Busca todos los patrones de hora (ej. "09:00", "14:30") en el texto
-                    const matches = horaStr.match(/\d{1,2}:\d{2}/g);
-                    if (matches && matches.length > 0) {
-                        // Toma la ÚLTIMA hora escrita (Ej: "10:00 - 12:30" -> tomará "12:30")
-                        const ultimaHora = matches[matches.length - 1];
-                        const partesHora = ultimaHora.split(':');
-                        horas = parseInt(partesHora[0], 10);
-                        minutos = parseInt(partesHora[1], 10);
-                    }
-                }
-
-                // Creamos un objeto Date exacto de cuándo termina el curso
-                const finDelCurso = new Date(fechaCurso.getFullYear(), fechaCurso.getMonth(), fechaCurso.getDate(), horas, minutos, 59);
-                const ahora = new Date();
-                
-                return ahora > finDelCurso;
+                const partes = fechaStr.trim().split('/');
+                const dia = parseInt(partes[0]);
+                const mes = parseInt(partes[1]) - 1;
+                const anio = partes[2] ? parseInt(partes[2]) : ahora.getFullYear();
+                const finDelDia = new Date(anio, mes, dia, 23, 59, 59);
+                return ahora > finDelDia;
             } catch (e) { return false; }
         }
 
-        function obtenerEtiquetaDia(fechaStr, horaStr) {
-            if (!fechaStr) return "";
+        // LÓGICA MEJORADA: Detecta Hoy, Mañana o el día de la semana actual
+        function obtenerEtiquetaDia(fechaStr) {
+            if (!fechaStr || !fechaStr.includes('/')) return "";
             try {
-                const fechaCurso = obtenerFechaObjeto(fechaStr);
-                if (fechaCurso.getTime() === 864000000000000) return "";
-                
                 const ahora = new Date();
+                const partes = fechaStr.trim().split('/');
+                const dia = parseInt(partes[0]);
+                const mes = parseInt(partes[1]) - 1;
+                const anio = partes[2] ? parseInt(partes[2]) : ahora.getFullYear();
+                
+                const fechaCurso = new Date(anio, mes, dia);
+                
                 const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
                 const manana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
-                const tiempoCurso = new Date(fechaCurso.getFullYear(), fechaCurso.getMonth(), fechaCurso.getDate()).getTime();
 
-                if (tiempoCurso === hoy.getTime()) {
-                    // Verificación extra: si es hoy pero ya pasó la hora de inicio (opcional)
+                // 1. Validar si es HOY o MAÑANA
+                if (fechaCurso.getTime() === hoy.getTime()) {
                     return `<div class="badge-item badge-hoy">HOY</div>`;
-                } else if (tiempoCurso === manana.getTime()) {
+                } else if (fechaCurso.getTime() === manana.getTime()) {
                     return `<div class="badge-item badge-manana">MAÑANA</div>`;
                 }
 
+                // 2. Validar si está dentro de la misma semana en curso (Lunes a Domingo)
                 const diaSemanaActual = hoy.getDay(); 
                 const distanciaAlLunes = diaSemanaActual === 0 ? -6 : 1 - diaSemanaActual;
+                
                 const lunesDeEstaSemana = new Date(hoy);
                 lunesDeEstaSemana.setDate(hoy.getDate() + distanciaAlLunes);
+                
                 const domingoDeEstaSemana = new Date(lunesDeEstaSemana);
                 domingoDeEstaSemana.setDate(lunesDeEstaSemana.getDate() + 6);
 
                 if (fechaCurso >= lunesDeEstaSemana && fechaCurso <= domingoDeEstaSemana) {
                     const diasNombre = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
-                    return `<div class="badge-item badge-semana">${diasNombre[fechaCurso.getDay()]}</div>`;
+                    const nombreDia = diasNombre[fechaCurso.getDay()];
+                    return `<div class="badge-item badge-semana">${nombreDia}</div>`;
                 }
+
                 return "";
             } catch (e) { return ""; }
         }
 
         function parseCSV(text) {
-            const rows = []; let row = []; let col = ''; let inQuotes = false;
+            const rows = [];
+            let row = [];
+            let col = '';
+            let inQuotes = false;
             for (let i = 0; i < text.length; i++) {
                 let char = text[i];
                 if (char === '"') inQuotes = !inQuotes;
@@ -244,215 +187,92 @@
             return rows;
         }
 
-        function construirCardHtml(columns) {
-            const categoria = columns[0]?.trim() || 'General';
-            const titulo = columns[1]?.trim();
-            const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-            const horasArr = (columns[3] || '').split(',').map(h => h.trim());
-            const lugar = columns[4] || 'Por definir';
-            const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
-            
-            const strId = (titulo + (columns[2] || '')).replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
-            const courseId = "crs_" + strId;
-            const now = Date.now();
-            
-            const esNuevo = seenCourses[courseId] && (now - seenCourses[courseId] < (24 * 60 * 60 * 1000));
-            const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0], horasArr[0]) : "";
-
-            let sessionsHtml = '';
-            fechasArr.forEach((f, i) => {
-                const normalizada = f.replace(/[-.]/g, '/');
-                const p = normalizada.split('/');
-                const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-                sessionsHtml += `
-                    <div class="session-item">
-                        <div class="calendar-icon">
-                            <span class="cal-month">${meses[parseInt(p[1], 10)-1] || 'DÍA'}</span>
-                            <span class="cal-day">${p[0]}</span>
-                        </div>
-                        <div class="time-info"><div class="value">${horasArr[i] || '--:--'}</div></div>
-                    </div>`;
-            });
-
-            let badgesBlock = '';
-            if (esNuevo || etiquetaDiaHtml) {
-                badgesBlock = `
-                    <div class="badges-wrapper">
-                        ${etiquetaDiaHtml}
-                        ${esNuevo ? '<div class="badge-item new-badge">Nuevo</div>' : ''}
-                    </div>`;
-            }
-
-            return `
-                <div class="course-card ${esNuevo ? 'new-highlight' : ''}">
-                    ${badgesBlock}
-                    <div class="card-left">
-                        <span class="category-label">${categoria}</span>
-                        <h2 class="course-title">${titulo}</h2>
-                        <div class="sessions-wrapper">${sessionsHtml}</div>
-                    </div>
-                    <div class="card-right">
-                        <div class="right-label">UBICACIÓN</div>
-                        <div class="location-box">${lugar}</div>
-                        <div class="right-label">CONVOCADOS</div>
-                        <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
-                    </div>
-                </div>`;
-        }
-
-        function renderPage(pageIndex, forceReset = false) {
-            const container = document.getElementById('course-grid');
-            const indicatorsContainer = document.getElementById('indicators');
-            
-            const remainingCourses = allCourses.slice(1);
-            const start = pageIndex * cursosPorPagina;
-            const end = start + cursosPorPagina;
-            const cursosPaginados = remainingCourses.slice(start, end);
-
-            let htmlContent = '';
-            cursosPaginados.forEach(curso => { htmlContent += construirCardHtml(curso); });
-
-            const totalPages = Math.max(1, Math.ceil(remainingCourses.length / cursosPorPagina));
-            let indicatorsHtml = '';
-            for(let i=0; i < totalPages; i++) {
-                indicatorsHtml += `<div class="dot ${i === pageIndex ? 'active' : ''}"></div>`;
-            }
-
-            const hash = JSON.stringify(cursosPaginados);
-            const debeAnimar = (pageIndex !== lastPageRendered) || (hash !== currentCoursesHash) || forceReset;
-            
-            lastPageRendered = pageIndex;
-            currentCoursesHash = hash;
-
-            if (debeAnimar) {
-                container.style.opacity = 0;
-                setTimeout(() => {
-                    container.innerHTML = htmlContent;
-                    indicatorsContainer.innerHTML = indicatorsHtml;
-                    container.style.opacity = 1;
-                }, 250); 
-            } else {
-                container.innerHTML = htmlContent;
-                indicatorsContainer.innerHTML = indicatorsHtml;
-            }
-        }
-
-        function startCycling() {
-            if (cycleInterval) clearInterval(cycleInterval);
-            
-            const remainingLength = allCourses.length > 1 ? allCourses.length - 1 : 0;
-            const totalPages = Math.ceil(remainingLength / cursosPorPagina);
-            
-            if (totalPages <= 1) return; 
-            
-            cycleInterval = setInterval(() => {
-                currentPage++;
-                if (currentPage >= totalPages) currentPage = 0;
-                renderPage(currentPage);
-            }, segundosPorPagina * 1000);
-        }
-
-        function updateLoaderDisplay() {
-            const wrapper = document.getElementById('status-wrapper');
-            const textEl = document.getElementById('status-text');
-            const spinner = document.querySelector('.spinner');
-
-            if (allCourses.length > 0) {
-                if (wrapper.style.opacity !== '0') {
-                    wrapper.style.opacity = '0';
-                    setTimeout(() => wrapper.style.display = 'none', 500);
-                }
-            } else {
-                spinner.style.display = 'none';
-                textEl.innerText = "No hay cursos próximos.";
-            }
-        }
-
         async function loadCursos() {
+            const status = document.getElementById('status-msg');
+            const container = document.getElementById('course-grid');
+
             try {
                 const response = await fetch(`${url}&t=${Date.now()}`);
                 const csvRaw = await response.text();
+                
                 if (!csvRaw || csvRaw.length < 50) return;
 
                 const data = parseCSV(csvRaw);
-                let cursosExcel = data.length > 0 && data[0][0].toLowerCase().includes('cat') ? data.slice(1) : data;
+                let cursosExcel = data;
+                if (data.length > 0 && data[0][0].toLowerCase().includes('cat')) {
+                    cursosExcel = data.slice(1);
+                }
 
                 const cursosFiltrados = cursosExcel.filter(columns => {
                     if (columns.length < 2 || !columns[1]?.trim()) return false;
-                    
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-                    const horasArr = (columns[3] || '').split(',').map(h => h.trim());
-                    
-                    if (fechasArr.length > 0) {
-                        const ultimaFecha = fechasArr[fechasArr.length - 1];
-                        const ultimaHora = horasArr[fechasArr.length - 1] || horasArr[horasArr.length - 1] || "";
-                        // Filtro aplicado: si la hora de fin ya pasó respecto al reloj actual, desaparece.
-                        if (cursoYaTermino(ultimaFecha, ultimaHora)) return false; 
-                    }
-                    return true;
+                    const ultimaFecha = fechasArr[fechasArr.length - 1];
+                    return !(ultimaFecha && cursoYaTermino(ultimaFecha));
                 });
-
-                cursosFiltrados.sort((a, b) => {
-                    const fechasA = (a[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-                    const fechasB = (b[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-                    return obtenerFechaObjeto(fechasA[0]).getTime() - obtenerFechaObjeto(fechasB[0]).getTime();
-                });
-
-                try { seenCourses = JSON.parse(localStorage.getItem('isopan_cursos_vistos') || '{}'); } catch(e) {}
-                const now = Date.now();
-                let storageChanged = false;
-
-                for (const id in seenCourses) {
-                    if (now - seenCourses[id] > 7 * 24 * 60 * 60 * 1000) {
-                        delete seenCourses[id];
-                        storageChanged = true;
-                    }
-                }
-
-                cursosFiltrados.forEach(columns => {
-                    const titulo = columns[1]?.trim();
-                    const strId = (titulo + (columns[2] || '')).replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
-                    const courseId = "crs_" + strId;
-                    if (!seenCourses[courseId]) {
-                        seenCourses[courseId] = now;
-                        storageChanged = true;
-                    }
-                });
-
-                if (storageChanged) {
-                    try { localStorage.setItem('isopan_cursos_vistos', JSON.stringify(seenCourses)); } catch(e) {}
-                }
 
                 const newSnapshot = JSON.stringify(cursosFiltrados);
-                
-                if (newSnapshot !== currentSnapshot) {
-                    currentSnapshot = newSnapshot;
-                    allCourses = cursosFiltrados;
+
+                if (newSnapshot === currentSnapshot) return;
+
+                currentSnapshot = newSnapshot;
+                let htmlContent = '';
+
+                cursosFiltrados.forEach((columns, index) => {
+                    const categoria = columns[0]?.trim() || 'General';
+                    const titulo = columns[1]?.trim();
+                    const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
+                    const horasArr = (columns[3] || '').split(',').map(h => h.trim());
+                    const lugar = columns[4] || 'Por definir';
+                    const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
                     
-                    updateLoaderDisplay();
-                    
-                    const fixedContainer = document.getElementById('fixed-course');
-                    if (allCourses.length > 0) {
-                        fixedContainer.innerHTML = construirCardHtml(allCourses[0]);
-                    } else {
-                        fixedContainer.innerHTML = '';
+                    const esNuevo = (index === cursosFiltrados.length - 1);
+                    const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0]) : "";
+
+                    let sessionsHtml = '';
+                    fechasArr.forEach((f, i) => {
+                        const p = f.split('/');
+                        const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+                        sessionsHtml += `
+                            <div class="session-item">
+                                <div class="calendar-icon">
+                                    <span class="cal-month">${meses[parseInt(p[1])-1] || 'DÍA'}</span>
+                                    <span class="cal-day">${p[0]}</span>
+                                </div>
+                                <div class="time-info"><div class="value">${horasArr[i] || '--:--'}</div></div>
+                            </div>`;
+                    });
+
+                    let badgesBlock = '';
+                    if (esNuevo || etiquetaDiaHtml) {
+                        badgesBlock = `
+                            <div class="badges-wrapper">
+                                ${etiquetaDiaHtml}
+                                ${esNuevo ? '<div class="badge-item new-badge">Nuevo</div>' : ''}
+                            </div>`;
                     }
 
-                    currentPage = 0; 
-                    renderPage(0, true);
-                    startCycling();
-                } else {
-                    const fixedContainer = document.getElementById('fixed-course');
-                    if (allCourses.length > 0) {
-                        const fixedHtml = construirCardHtml(allCourses[0]);
-                        if (fixedContainer.innerHTML !== fixedHtml) fixedContainer.innerHTML = fixedHtml;
-                        renderPage(currentPage, false);
-                    }
-                }
+                    htmlContent += `
+                        <div class="course-card ${esNuevo ? 'new-highlight' : ''}">
+                            ${badgesBlock}
+                            <div class="card-left">
+                                <span class="category-label">${categoria}</span>
+                                <h2 class="course-title">${titulo}</h2>
+                                <div class="sessions-wrapper">${sessionsHtml}</div>
+                            </div>
+                            <div class="card-right">
+                                <div class="right-label">UBICACIÓN</div>
+                                <div class="location-box">${lugar}</div>
+                                <div class="right-label">CONVOCADOS</div>
+                                <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
+                            </div>
+                        </div>`;
+                });
+
+                status.style.display = cursosFiltrados.length > 0 ? "none" : "block";
+                container.innerHTML = htmlContent;
 
             } catch (e) {
                 console.error("Error cargando datos:", e);
-                if(allCourses.length > 0) updateLoaderDisplay();
             }
         }
 
