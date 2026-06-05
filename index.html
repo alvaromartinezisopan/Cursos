@@ -76,31 +76,44 @@
         .badge-manana { background: var(--alert-yellow); color: #1d1d1f; }
         .badge-semana { background: var(--alert-weekday); color: white; }
 
-        /* Ajustado flex de 0.6 a 0.8 para dar más espacio */
         .card-left { 
             flex: 0.8; 
             border-right: 1px solid #e5e5e7; 
             padding-right: 20px; 
         }
         
-        /* Ajustado flex de 1.4 a 1.2 para equilibrar la tarjeta */
         .card-right { 
             flex: 1.2; 
             display: flex; 
             flex-direction: column; 
             padding-left: 15px; 
+            padding-top: 5px; /* Ajuste sutil para alinear con el título de la izquierda */
         }
 
         .category-label { font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; margin-bottom: 4px; }
         .course-title { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 0 0 12px 0; color: var(--text-main); }
-        .sessions-wrapper { display: flex; flex-wrap: wrap; gap: 8px; }
-        .session-item { display: flex; align-items: center; background: #ffffff; padding: 6px 10px; border-radius: 10px; gap: 10px; border: 1px solid #e5e5e7; }
+        
+        .sessions-wrapper { display: flex; flex-wrap: wrap; gap: 10px; }
+        
+        /* Nuevas clases para las tarjetas de fechas y horas separadas pero unidas */
+        .session-group { display: flex; gap: 4px; } 
+        .session-box { 
+            background: #ffffff; 
+            padding: 6px 12px; 
+            border: 1px solid #e5e5e7; 
+            display: flex; 
+            align-items: center; 
+        }
+        .box-left { border-radius: 10px 4px 4px 10px; } /* Borde curvo por fuera, más recto por dentro */
+        .box-right { border-radius: 4px 10px 10px 4px; } /* Borde curvo por fuera, más recto por dentro */
+
         .calendar-icon { display: flex; flex-direction: column; align-items: center; min-width: 32px; }
         .cal-month { font-size: 8px; font-weight: 800; color: var(--apple-red); text-transform: uppercase; }
         .cal-day { font-size: 16px; font-weight: 700; color: var(--text-main); }
         .time-info .value { font-size: 13px; font-weight: 600; }
+        
         .right-label { font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase; margin-bottom: 6px; }
-        .location-box { margin-bottom: 15px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        .location-box { margin-bottom: 18px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; font-weight: 500; }
         .attendee-tag { background: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-secondary); border: 1px solid #e5e5e7; margin-right: 4px; margin-bottom: 4px; display: inline-block; }
     </style>
 </head>
@@ -259,12 +272,17 @@
                                 </div>`;
                         }
 
+                        // Aquí está el cambio: Un div padre agrupa los dos divs hijos con estilos de tarjeta
                         sessionsHtml += `
-                            <div class="session-item">
-                                <div style="display: flex; gap: 12px;">
-                                    ${iconosCalendario}
+                            <div class="session-group">
+                                <div class="session-box box-left">
+                                    <div style="display: flex; gap: 12px;">
+                                        ${iconosCalendario}
+                                    </div>
                                 </div>
-                                <div class="time-info"><div class="value">${grupo.hora}</div></div>
+                                <div class="session-box box-right">
+                                    <div class="time-info"><div class="value">${grupo.hora}</div></div>
+                                </div>
                             </div>`;
                     });
 
