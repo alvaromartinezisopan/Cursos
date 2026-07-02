@@ -148,10 +148,11 @@
         const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv`;
         
         // =========================================================
-        //  AJUSTES DE CONFIGURACIÓN (YODECK)
+        //  AJUSTES DE CONFIGURACIÓN MODIFICABLES
         // =========================================================
-        const cursosPorPagina = 2;    // Ajusta cuántos cursos caben en tu ventana
-        const segundosPorPagina = 30; // Tiempo que dura cada página expuesta
+        const cursosPorPagina = 2;     // Cuántos cursos caben en tu ventana de Yodeck
+        const segundosPorPagina = 30;  // Tiempo de rotación por página (en segundos)
+        const diasMaximosVista = 14;    // Filtro de días a futuro. Cámbialo a 10, 15, etc.
         // =========================================================
 
         let currentSnapshot = ""; 
@@ -245,7 +246,7 @@
                 container.innerHTML = "";
                 indicatorsContainer.innerHTML = "";
                 status.style.display = "block";
-                status.innerText = "No hay cursos programados para los próximos 7 días.";
+                status.innerText = `No hay cursos programados para los próximos ${diasMaximosVista} días.`;
                 return;
             }
 
@@ -343,10 +344,10 @@
             // Reemplazo directo en DOM (Corte instantáneo ideal para 24Hz)
             container.innerHTML = htmlContent;
 
-            // Generación de puntos indicadores estáticos
+            // Generación de puntos indicadores estáticos (Siempre visibles si hay cursos)
             const totalPages = Math.ceil(allCourses.length / cursosPorPagina);
             let dotsHtml = '';
-            if (totalPages > 1) {
+            if (totalPages > 0) {
                 for (let i = 0; i < totalPages; i++) {
                     dotsHtml += `<div class="dot ${i === pageIndex ? 'active' : ''}"></div>`;
                 }
@@ -380,7 +381,7 @@
                     cursosExcel = data.slice(1);
                 }
 
-                // Filtrado doble: 1. No terminados, 2. Máximo 7 días de anticipación
+                // Filtrado dinámico usando la variable superior "diasMaximosVista"
                 const cursosFiltrados = cursosExcel.filter(columns => {
                     if (columns.length < 2 || !columns[1]?.trim()) return false;
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
@@ -391,16 +392,16 @@
                     
                     if (ultimaFecha && cursoYaTermino(ultimaFecha)) return false;
 
-                    // Filtro estricto de 1 semana (7 días vista)
+                    // Filtro dinámico de días vista
                     const fechaInicio = obtenerFechaObjeto(primeraFecha);
-                    const limiteSieteDias = new Date();
-                    limiteSieteDias.setDate(limiteSieteDias.getDate() + 7);
-                    limiteSieteDias.setHours(23, 59, 59, 999);
+                    const limiteDias = new Date();
+                    limiteDias.setDate(limiteDias.getDate() + diasMaximosVista);
+                    limiteDias.setHours(23, 59, 59, 999);
 
-                    return fechaInicio <= limiteSieteDias;
+                    return fechaInicio <= limiteDias;
                 });
 
-                // Ordenamos cronológicamente por la primera sesión
+                // Ordenación cronológica
                 cursosFiltrados.sort((a, b) => {
                     const fechaA = (a[2] || '').split(',')[0].trim();
                     const fechaB = (b[2] || '').split(',')[0].trim();
