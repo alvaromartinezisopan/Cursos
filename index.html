@@ -87,7 +87,7 @@
             display: flex; 
             flex-direction: column; 
             padding-left: 15px; 
-            padding-top: 5px; /* Ajuste sutil para alinear con el título de la izquierda */
+            padding-top: 5px; 
         }
 
         .category-label { font-size: 10px; font-weight: 700; color: var(--isopan-blue); text-transform: uppercase; margin-bottom: 4px; }
@@ -95,7 +95,6 @@
         
         .sessions-wrapper { display: flex; flex-wrap: wrap; gap: 10px; }
         
-        /* Nuevas clases para las tarjetas de fechas y horas separadas pero unidas */
         .session-group { display: flex; gap: 4px; } 
         .session-box { 
             background: #ffffff; 
@@ -104,8 +103,8 @@
             display: flex; 
             align-items: center; 
         }
-        .box-left { border-radius: 10px 4px 4px 10px; } /* Borde curvo por fuera, más recto por dentro */
-        .box-right { border-radius: 4px 10px 10px 4px; } /* Borde curvo por fuera, más recto por dentro */
+        .box-left { border-radius: 10px 4px 4px 10px; } 
+        .box-right { border-radius: 4px 10px 10px 4px; } 
 
         .calendar-icon { display: flex; flex-direction: column; align-items: center; min-width: 32px; }
         .cal-month { font-size: 8px; font-weight: 800; color: var(--apple-red); text-transform: uppercase; }
@@ -115,6 +114,25 @@
         .right-label { font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase; margin-bottom: 6px; }
         .location-box { margin-bottom: 18px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; font-weight: 500; }
         .attendee-tag { background: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--text-secondary); border: 1px solid #e5e5e7; margin-right: 4px; margin-bottom: 4px; display: inline-block; }
+
+        /* Contenedor e Indicadores de Página (Sin transiciones para 24Hz) */
+        .page-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            width: 100%;
+            min-height: 10px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #d1d1d6;
+        }
+        .dot.active {
+            background-color: var(--isopan-blue);
+        }
     </style>
 </head>
 <body>
@@ -123,12 +141,35 @@
 
     <div class="main-wrapper">
         <div class="grid-container" id="course-grid"></div>
+        <div class="page-indicators" id="indicators"></div>
     </div>
 
     <script>
         const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vQi8xUmy1GQ6y8KQ6wLtwnf5AX_g6GiMre33zIEw44gvW0EWurggC-g9S2kVqYq8ocvqloXPdhu6GMv/pub?output=csv`;
         
+        // =========================================================
+        //  AJUSTES DE CONFIGURACIÓN (YODECK)
+        // =========================================================
+        const cursosPorPagina = 2;    // Ajusta cuántos cursos caben en tu ventana
+        const segundosPorPagina = 30; // Tiempo que dura cada página expuesta
+        // =========================================================
+
         let currentSnapshot = ""; 
+        let allCourses = [];
+        let currentPage = 0;
+        let rotationInterval = null;
+
+        function obtenerFechaObjeto(fechaStr) {
+            if (!fechaStr || !fechaStr.includes('/')) return new Date(864000000000000);
+            try {
+                const partes = fechaStr.trim().split('/');
+                const dia = parseInt(partes[0]);
+                const mes = parseInt(partes[1]) - 1;
+                const ahora = new Date();
+                const anio = partes[2] ? parseInt(partes[2]) : ahora.getFullYear();
+                return new Date(anio, mes, dia);
+            } catch (e) { return new Date(864000000000000); }
+        }
 
         function cursoYaTermino(fechaStr) {
             if (!fechaStr || !fechaStr.includes('/')) return false;
@@ -153,7 +194,6 @@
                 const anio = partes[2] ? parseInt(partes[2]) : ahora.getFullYear();
                 
                 const fechaCurso = new Date(anio, mes, dia);
-                
                 const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
                 const manana = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
 
@@ -183,10 +223,7 @@
         }
 
         function parseCSV(text) {
-            const rows = [];
-            let row = [];
-            let col = '';
-            let inQuotes = false;
+            const rows = []; let row = []; let col = ''; let inQuotes = false;
             for (let i = 0; i < text.length; i++) {
                 let char = text[i];
                 if (char === '"') inQuotes = !inQuotes;
@@ -199,10 +236,138 @@
             return rows;
         }
 
-        async function loadCursos() {
-            const status = document.getElementById('status-msg');
+        function renderPage(pageIndex) {
             const container = document.getElementById('course-grid');
+            const indicatorsContainer = document.getElementById('indicators');
+            const status = document.getElementById('status-msg');
 
+            if (allCourses.length === 0) {
+                container.innerHTML = "";
+                indicatorsContainer.innerHTML = "";
+                status.style.display = "block";
+                status.innerText = "No hay cursos programados para los próximos 7 días.";
+                return;
+            }
+
+            status.style.display = "none";
+
+            const start = pageIndex * cursosPorPagina;
+            const end = start + cursosPorPagina;
+            const cursosPagina = allCourses.slice(start, end);
+
+            let htmlContent = '';
+            const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+
+            cursosPagina.forEach((columns, indexInPage) => {
+                const globalIndex = start + indexInPage;
+                const categoria = columns[0]?.trim() || 'General';
+                const titulo = columns[1]?.trim();
+                const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
+                const horasArr = (columns[3] || '').split(',').map(h => h.trim());
+                const lugar = columns[4] || 'Por definir';
+                const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
+                
+                // Mantiene tu regla de marcar el último elemento cargado del Excel como "Nuevo"
+                const esNuevo = (globalIndex === allCourses.length - 1);
+                const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0]) : "";
+
+                let sessionsHtml = '';
+                const sesionesAgrupadas = [];
+                fechasArr.forEach((f, i) => {
+                    const hora = horasArr[i] || '--:--';
+                    let grupo = sesionesAgrupadas.find(s => s.hora === hora);
+                    if (!grupo) {
+                        grupo = { hora: hora, fechas: [] };
+                        sesionesAgrupadas.push(grupo);
+                    }
+                    grupo.fechas.push(f);
+                });
+
+                sesionesAgrupadas.forEach(grupo => {
+                    const diasPorMes = {};
+                    grupo.fechas.forEach(f => {
+                        const p = f.split('/');
+                        const mesNombre = meses[parseInt(p[1]) - 1] || 'DÍA';
+                        if (!diasPorMes[mesNombre]) diasPorMes[mesNombre] = [];
+                        diasPorMes[mesNombre].push(p[0]);
+                    });
+
+                    let iconosCalendario = '';
+                    for (const [mes, dias] of Object.entries(diasPorMes)) {
+                        iconosCalendario += `
+                            <div class="calendar-icon">
+                                <span class="cal-month">${mes}</span>
+                                <span class="cal-day">${dias.join(', ')}</span>
+                            </div>`;
+                    }
+
+                    sessionsHtml += `
+                        <div class="session-group">
+                            <div class="session-box box-left">
+                                <div style="display: flex; gap: 12px;">
+                                    ${iconosCalendario}
+                                </div>
+                            </div>
+                            <div class="session-box box-right">
+                                <div class="time-info"><div class="value">${grupo.hora}</div></div>
+                            </div>
+                        </div>`;
+                });
+
+                let badgesBlock = '';
+                if (esNuevo || etiquetaDiaHtml) {
+                    badgesBlock = `
+                        <div class="badges-wrapper">
+                            ${etiquetaDiaHtml}
+                            ${esNuevo ? '<div class="badge-item new-badge">Nuevo</div>' : ''}
+                        </div>`;
+                }
+
+                htmlContent += `
+                    <div class="course-card ${esNuevo ? 'new-highlight' : ''}">
+                        ${badgesBlock}
+                        <div class="card-left">
+                            <span class="category-label">${categoria}</span>
+                            <h2 class="course-title">${titulo}</h2>
+                            <div class="sessions-wrapper">${sessionsHtml}</div>
+                        </div>
+                        <div class="card-right">
+                            <div class="right-label">UBICACIÓN</div>
+                            <div class="location-box">${lugar}</div>
+                            <div class="right-label">CONVOCADOS</div>
+                            <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
+                        </div>
+                    </div>`;
+            });
+
+            // Reemplazo directo en DOM (Corte instantáneo ideal para 24Hz)
+            container.innerHTML = htmlContent;
+
+            // Generación de puntos indicadores estáticos
+            const totalPages = Math.ceil(allCourses.length / cursosPorPagina);
+            let dotsHtml = '';
+            if (totalPages > 1) {
+                for (let i = 0; i < totalPages; i++) {
+                    dotsHtml += `<div class="dot ${i === pageIndex ? 'active' : ''}"></div>`;
+                }
+            }
+            indicatorsContainer.innerHTML = dotsHtml;
+        }
+
+        function startRotation() {
+            if (rotationInterval) clearInterval(rotationInterval);
+            rotationInterval = setInterval(() => {
+                const totalPages = Math.ceil(allCourses.length / cursosPorPagina);
+                if (totalPages > 1) {
+                    currentPage = (currentPage + 1) % totalPages;
+                    renderPage(currentPage);
+                } else {
+                    currentPage = 0;
+                }
+            }, segundosPorPagina * 1000);
+        }
+
+        async function loadCursos() {
             try {
                 const response = await fetch(`${url}&t=${Date.now()}`);
                 const csvRaw = await response.text();
@@ -215,106 +380,42 @@
                     cursosExcel = data.slice(1);
                 }
 
+                // Filtrado doble: 1. No terminados, 2. Máximo 7 días de anticipación
                 const cursosFiltrados = cursosExcel.filter(columns => {
                     if (columns.length < 2 || !columns[1]?.trim()) return false;
                     const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
+                    if (fechasArr.length === 0) return false;
+
+                    const primeraFecha = fechasArr[0];
                     const ultimaFecha = fechasArr[fechasArr.length - 1];
-                    return !(ultimaFecha && cursoYaTermino(ultimaFecha));
+                    
+                    if (ultimaFecha && cursoYaTermino(ultimaFecha)) return false;
+
+                    // Filtro estricto de 1 semana (7 días vista)
+                    const fechaInicio = obtenerFechaObjeto(primeraFecha);
+                    const limiteSieteDias = new Date();
+                    limiteSieteDias.setDate(limiteSieteDias.getDate() + 7);
+                    limiteSieteDias.setHours(23, 59, 59, 999);
+
+                    return fechaInicio <= limiteSieteDias;
+                });
+
+                // Ordenamos cronológicamente por la primera sesión
+                cursosFiltrados.sort((a, b) => {
+                    const fechaA = (a[2] || '').split(',')[0].trim();
+                    const fechaB = (b[2] || '').split(',')[0].trim();
+                    return obtenerFechaObjeto(fechaA) - obtenerFechaObjeto(fechaB);
                 });
 
                 const newSnapshot = JSON.stringify(cursosFiltrados);
 
-                if (newSnapshot === currentSnapshot) return;
-
-                currentSnapshot = newSnapshot;
-                let htmlContent = '';
-
-                cursosFiltrados.forEach((columns, index) => {
-                    const categoria = columns[0]?.trim() || 'General';
-                    const titulo = columns[1]?.trim();
-                    const fechasArr = (columns[2] || '').split(',').map(f => f.trim()).filter(f => f !== "");
-                    const horasArr = (columns[3] || '').split(',').map(h => h.trim());
-                    const lugar = columns[4] || 'Por definir';
-                    const asistentes = (columns[5] || '').split(',').filter(a => a.trim() !== "");
-                    
-                    const esNuevo = (index === cursosFiltrados.length - 1);
-                    const etiquetaDiaHtml = fechasArr.length > 0 ? obtenerEtiquetaDia(fechasArr[0]) : "";
-
-                    let sessionsHtml = '';
-                    const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-                    
-                    const sesionesAgrupadas = [];
-                    fechasArr.forEach((f, i) => {
-                        const hora = horasArr[i] || '--:--';
-                        let grupo = sesionesAgrupadas.find(s => s.hora === hora);
-                        if (!grupo) {
-                            grupo = { hora: hora, fechas: [] };
-                            sesionesAgrupadas.push(grupo);
-                        }
-                        grupo.fechas.push(f);
-                    });
-
-                    sesionesAgrupadas.forEach(grupo => {
-                        const diasPorMes = {};
-                        grupo.fechas.forEach(f => {
-                            const p = f.split('/');
-                            const mesNombre = meses[parseInt(p[1]) - 1] || 'DÍA';
-                            if (!diasPorMes[mesNombre]) diasPorMes[mesNombre] = [];
-                            diasPorMes[mesNombre].push(p[0]);
-                        });
-
-                        let iconosCalendario = '';
-                        for (const [mes, dias] of Object.entries(diasPorMes)) {
-                            iconosCalendario += `
-                                <div class="calendar-icon">
-                                    <span class="cal-month">${mes}</span>
-                                    <span class="cal-day">${dias.join(', ')}</span>
-                                </div>`;
-                        }
-
-                        // Aquí está el cambio: Un div padre agrupa los dos divs hijos con estilos de tarjeta
-                        sessionsHtml += `
-                            <div class="session-group">
-                                <div class="session-box box-left">
-                                    <div style="display: flex; gap: 12px;">
-                                        ${iconosCalendario}
-                                    </div>
-                                </div>
-                                <div class="session-box box-right">
-                                    <div class="time-info"><div class="value">${grupo.hora}</div></div>
-                                </div>
-                            </div>`;
-                    });
-
-                    let badgesBlock = '';
-                    if (esNuevo || etiquetaDiaHtml) {
-                        badgesBlock = `
-                            <div class="badges-wrapper">
-                                ${etiquetaDiaHtml}
-                                ${esNuevo ? '<div class="badge-item new-badge">Nuevo</div>' : ''}
-                            </div>`;
-                    }
-
-                    htmlContent += `
-                        <div class="course-card ${esNuevo ? 'new-highlight' : ''}">
-                            ${badgesBlock}
-                            <div class="card-left">
-                                <span class="category-label">${categoria}</span>
-                                <h2 class="course-title">${titulo}</h2>
-                                <div class="sessions-wrapper">${sessionsHtml}</div>
-                            </div>
-                            <div class="card-right">
-                                <div class="right-label">UBICACIÓN</div>
-                                <div class="location-box">${lugar}</div>
-                                <div class="right-label">CONVOCADOS</div>
-                                <div>${asistentes.map(a => `<span class="attendee-tag">${a.trim()}</span>`).join('')}</div>
-                            </div>
-                        </div>`;
-                });
-
-                status.style.display = cursosFiltrados.length > 0 ? "none" : "block";
-                container.innerHTML = htmlContent;
-
+                if (newSnapshot !== currentSnapshot) {
+                    currentSnapshot = newSnapshot;
+                    allCourses = cursosFiltrados;
+                    currentPage = 0; 
+                    renderPage(currentPage);
+                    startRotation();
+                }
             } catch (e) {
                 console.error("Error cargando datos:", e);
             }
